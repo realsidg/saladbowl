@@ -24,7 +24,9 @@ To change the password later, make a new hash and redeploy. Every phone is logge
 | `PUBLIC_ORIGIN` | the public URL, no trailing slash, e.g. `https://saladbowl.example.com` |
 | `TRUST_PROXY` | the reverse proxy's address or network (see below) |
 
-Optional: `PORT` (default 3000), `DATA_DIR` (default `/data`).
+Optional: `PORT` (default 3000), `DATA_DIR` (default `/data`), `CLIENT_IP_HEADER`.
+
+**Behind Cloudflare** (orange-cloud DNS), set `CLIENT_IP_HEADER=cf-connecting-ip`. Otherwise every visitor looks like one of a few Cloudflare addresses and the per-address login limit lumps strangers together. Someone who reaches the server directly, bypassing Cloudflare, could fake that header to dodge the per-address limit; the site-wide limit (50 failures an hour) still applies to them.
 
 **`TRUST_PROXY`** decides whose `X-Forwarded-For` header is believed for the real client address, which the login rate limit uses. Set it to the proxy's Docker network (for Traefik on a default Docker network, `172.16.0.0/12` works). Never publish port 3000 directly to the internet with `TRUST_PROXY` set: anyone could then fake their address and dodge the rate limit.
 

@@ -274,3 +274,33 @@ describe("review fixes", () => {
     expect((await post(`/api/games/${gameId}/rejoin`, {})).statusCode).toBe(401)
   })
 })
+
+describe("behind Cloudflare", () => {
+  it("rate-limits by CF-Connecting-IP when CLIENT_IP_HEADER is set", async () => {
+    make({ cfg: { clientIpHeader: "cf-connecting-ip" } })
+    const login = (visitor: string) =>
+      app.inject({
+        method: "POST",
+        url: "/api/login",
+        payload: { password: "nope" },
+        remoteAddress: "172.70.1.1", // the same Cloudflare edge for everyone
+        headers: { origin: ORIGIN, "cf-connecting-ip": visitor },
+      })
+    for (let i = 0; i < 6; i++) await login("203.0.113.9")
+    expect((await login("203.0.113.9")).statusCode).toBe(429)
+    expect((await login("198.51.100.7")).statusCode).toBe(401) // a different visitor isn't locked out
+  })
+
+  it("ignores a header value that isn't an IP address", async () => {
+    make({ cfg: { clientIpHeader: "cf-connecting-ip" } })
+    for (let i = 0; i < 6; i++)
+      await app.inject({
+        method: "POST",
+        url: "/api/login",
+        payload: { password: "nope" },
+        remoteAddress: "9.9.9.1",
+        headers: { origin: ORIGIN, "cf-connecting-ip": `junk-${i}` },
+      })
+    expect((await post("/api/login", { password: "nope" }, { ip: "9.9.9.1" })).statusCode).toBe(429)
+  })
+})

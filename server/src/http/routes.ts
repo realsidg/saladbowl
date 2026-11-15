@@ -1,4 +1,5 @@
-import type { FastifyInstance, FastifyReply } from "fastify"
+import { isIP } from "node:net"
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { z } from "zod"
 import { nameSchema } from "@saladbowl/shared"
 import { signSession } from "../auth/cookies.js"
@@ -28,6 +29,13 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
   const inviteLimit = new WindowLimiter(300, 15 * 60_000)
   const createLimit = new WindowLimiter(10, 60 * 60_000)
 
+  /** The visitor's address for rate limits: the configured proxy header if it holds an IP, else the socket/forwarded address. */
+  const clientIp = (req: FastifyRequest) => {
+    const v = cfg.clientIpHeader ? req.headers[cfg.clientIpHeader] : undefined
+    const ip = typeof v === "string" ? v.trim() : ""
+    return ip && isIP(ip) ? ip : req.ip
+  }
+
   const setCookie = (reply: FastifyReply, name: string, sessionId: string, ttlMs: number) =>
     reply.setCookie(name, signSession(sessionId, auth.key), {
       httpOnly: true,
@@ -53,7 +61,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
   }
 
   app.post("/api/login", async (req, reply) => {
-    const ip = req.ip
+    const ip = clientIp(req)
     const gate = login.check(ip, now())
     if (!gate.ok) return tooMany(reply, gate.retryAfterMs)
     const body = loginBody.safeParse(req.body)
@@ -123,7 +131,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
   }
 
   app.get("/api/invite/:token", async (req, reply) => {
-    const g = inviteGame(req.ip, req.params, reply)
+    const g = inviteGame(clientIp(req), req.params, reply)
     if (!g) return reply
     const mine = auth.player(req)
     return {
@@ -136,7 +144,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
   })
 
   app.post("/api/invite/:token/join", async (req, reply) => {
-    const g = inviteGame(req.ip, req.params, reply)
+    const g = inviteGame(clientIp(req), req.params, reply)
     if (!g) return reply
     const body = joinBody.safeParse(req.body)
     if (!body.success) return reply.code(400).send({ code: "invalid" })

@@ -8,6 +8,8 @@ export interface Config {
   port: number
   cookieSecure: boolean
   staticDir: string | null
+  /** e.g. "cf-connecting-ip" behind Cloudflare: the header holding the real visitor address */
+  clientIpHeader: string | null
 }
 
 export function loadConfig(env: Record<string, string | undefined>): Config {
@@ -35,5 +37,6 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     port: Number(env.PORT) || 3000,
     cookieSecure: env.COOKIE_SECURE?.trim() !== "false",
     staticDir: env.STATIC_DIR?.trim() || null,
+    clientIpHeader: env.CLIENT_IP_HEADER?.trim().toLowerCase() || null,
   }
 }

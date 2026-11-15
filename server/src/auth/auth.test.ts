@@ -6,7 +6,8 @@ import { hashPassword, verifyPassword } from "./password.js"
 describe("password", () => {
   it("verifies the right password only, with a fresh salt each time", async () => {
     const h = await hashPassword("correct horse")
-    expect(h).toMatch(/^scrypt\$32768\$8\$1\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/)
+    expect(h).toMatch(/^scrypt:32768:8:1:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/)
+    expect(h).not.toContain("$")
     expect(await verifyPassword("correct horse", h)).toBe(true)
     expect(await verifyPassword("correct horsE", h)).toBe(false)
     expect(await hashPassword("correct horse")).not.toBe(h)
@@ -18,7 +19,7 @@ describe("password", () => {
 })
 
 describe("session cookies", () => {
-  const key = sessionKey("s".repeat(32), "scrypt$hash-one")
+  const key = sessionKey("s".repeat(32), "scrypt:hash-one")
   it("round-trips and rejects tampering", () => {
     const v = signSession("abc", key)
     expect(verifySession(v, key)).toBe("abc")
@@ -29,7 +30,7 @@ describe("session cookies", () => {
 
   it("rejects cookies once the password hash changes", () => {
     const v = signSession("abc", key)
-    expect(verifySession(v, sessionKey("s".repeat(32), "scrypt$hash-two"))).toBeNull()
+    expect(verifySession(v, sessionKey("s".repeat(32), "scrypt:hash-two"))).toBeNull()
   })
 })
 

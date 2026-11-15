@@ -11,15 +11,15 @@ function derive(pw: string, salt: Buffer, opts: ScryptOptions, keylen: number): 
   )
 }
 
-/** `scrypt$N$r$p$saltB64$keyB64` */
+/** `scrypt:N:r:p:saltB64:keyB64` (no `$`, so .env files and Compose never mangle it) */
 export async function hashPassword(pw: string): Promise<string> {
   const salt = randomBytes(16)
   const key = await derive(pw, salt, { N, r: R, p: P }, KEYLEN)
-  return ["scrypt", N, R, P, salt.toString("base64"), key.toString("base64")].join("$")
+  return ["scrypt", N, R, P, salt.toString("base64"), key.toString("base64")].join(":")
 }
 
 export async function verifyPassword(pw: string, stored: string): Promise<boolean> {
-  const parts = stored.split("$")
+  const parts = stored.split(":")
   if (parts.length !== 6 || parts[0] !== "scrypt") return false
   const [n, r, p] = parts.slice(1, 4).map(Number)
   if (!n || !r || !p || n > 2 ** 20) return false

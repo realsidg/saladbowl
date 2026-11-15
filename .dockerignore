@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.superpowers
+.claude
+e2e
+docs
+*.db
+*.db-*
+.env

@@ -1,0 +1,17 @@
+# Example only. Copy to docker-compose.yml and fill in the values.
+services:
+  saladbowl:
+    build: .
+    restart: unless-stopped
+    environment:
+      SALADBOWL_PASSWORD_HASH: "scrypt:32768:8:1:...:..." # from: docker run --rm -it <image> node server/dist/hash-password.js
+      SALADBOWL_SESSION_SECRET: "change-me-to-32-or-more-random-bytes" # openssl rand -base64 48
+      PUBLIC_ORIGIN: "https://saladbowl.example.com"
+      TRUST_PROXY: "172.16.0.0/12" # the reverse proxy's Docker network; "false" if nothing sits in front
+    volumes:
+      - saladbowl-data:/data
+    # No published port: put it behind your reverse proxy (Traefik, Caddy, nginx) for HTTPS.
+    expose:
+      - "3000"
+volumes:
+  saladbowl-data:

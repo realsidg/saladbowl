@@ -17,7 +17,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     return v
   }
   const passwordHash = need("SALADBOWL_PASSWORD_HASH")
-  if (!passwordHash.startsWith("scrypt$")) throw new Error("SALADBOWL_PASSWORD_HASH must come from `npm run hash-password`")
+  if (!passwordHash.startsWith("scrypt:")) throw new Error("SALADBOWL_PASSWORD_HASH must come from `npm run hash-password`")
   const sessionSecret = need("SALADBOWL_SESSION_SECRET")
   if (Buffer.byteLength(sessionSecret) < 32) throw new Error("SALADBOWL_SESSION_SECRET must be at least 32 bytes")
   const origins = need("PUBLIC_ORIGIN")

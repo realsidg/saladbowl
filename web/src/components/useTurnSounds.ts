@@ -2,8 +2,11 @@ import { useEffect, useRef } from "react"
 import type { Snapshot } from "@saladbowl/shared"
 import { sound } from "../device/sound"
 
+/** How late a bell may still ring: a phone waking long after the turn ended stays quiet. */
+const LATE_MS = 3000
+
 /** Bell once per turn when time runs out (even if the countdown jumped past 1), tick once at 5 s. */
-export function useTurnSounds(turn: Snapshot["turn"], left: number) {
+export function useTurnSounds(turn: Snapshot["turn"], left: number, serverNow: number) {
   const last = useRef<{ id: string | null; left: number; phase: string | null; rang: boolean; ticked: boolean }>({
     id: null,
     left: Infinity,
@@ -16,7 +19,7 @@ export function useTurnSounds(turn: Snapshot["turn"], left: number) {
     if (!turn) return
     if (turn.id !== l.id) Object.assign(l, { id: turn.id, left: Infinity, phase: null, rang: false, ticked: false })
     const timedOut =
-      (turn.phase === "playing" && left === 0 && l.left > 0) ||
+      (turn.phase === "playing" && left === 0 && l.left > 0 && turn.endsAt !== null && serverNow - turn.endsAt < LATE_MS) ||
       (turn.phase === "review" && l.phase === "playing" && (turn.remainingMs ?? 0) === 0)
     if (timedOut && !l.rang) {
       l.rang = true
@@ -28,5 +31,5 @@ export function useTurnSounds(turn: Snapshot["turn"], left: number) {
     }
     l.left = left
     l.phase = turn.phase
-  }, [turn, left])
+  }, [turn, left, serverNow])
 }

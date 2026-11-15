@@ -104,6 +104,12 @@ describe("GameSocket", () => {
     const s = make()
     const ws = FakeWS.all[0]!
     ws.open()
+    const send = ws.send.bind(ws)
+    ws.send = (d: string) => {
+      send(d)
+      const m = JSON.parse(d)
+      if (m.type === "ping") ws.onmessage!({ data: JSON.stringify({ type: "pong", t: m.t, serverNow: m.t }) })
+    }
     const pings = () => ws.sent.filter((m) => JSON.parse(m).type === "ping").length
     expect(pings()).toBe(1)
     vi.advanceTimersByTime(600)
@@ -127,6 +133,31 @@ describe("GameSocket", () => {
     expect(s.send({ type: "makeTeams" })).toBe(false)
     FakeWS.all[0]!.open()
     expect(s.send({ type: "makeTeams" })).toBe(true)
+    s.close()
+  })
+})
+
+describe("waking up", () => {
+  it("reconnects at once after being hidden a while, even if the socket looks open", () => {
+    const s = make()
+    FakeWS.all[0]!.open()
+    visible = "hidden"
+    listeners["visibilitychange"]!()
+    vi.advanceTimersByTime(5000)
+    const before = FakeWS.all.length
+    const last = FakeWS.all[before - 1]!
+    last.open() // even a socket that reports OPEN is replaced after a sleep
+    visible = "visible"
+    listeners["visibilitychange"]!()
+    expect(FakeWS.all).toHaveLength(before + 1)
+    s.close()
+  })
+
+  it("reconnects when a ping gets no answer", () => {
+    const s = make()
+    FakeWS.all[0]!.open()
+    vi.advanceTimersByTime(10_000 + 4000)
+    expect(FakeWS.all.length).toBeGreaterThanOrEqual(2)
     s.close()
   })
 })

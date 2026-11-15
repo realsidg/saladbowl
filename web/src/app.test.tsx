@@ -33,3 +33,12 @@ it("does not bounce /game back to / on a stale 'not in a game' answer", async ()
   await waitFor(() => expect(screen.getByText("Joining the game…")).toBeTruthy())
   expect(location.pathname).toBe("/game")
 })
+
+it("treats an invite link with a trailing slash as the invite", async () => {
+  const fetchMock = vi.fn(async () => new Response(JSON.stringify({ code: "invite_invalid" }), { status: 404 }))
+  vi.stubGlobal("fetch", fetchMock)
+  history.replaceState(null, "", "/join/AbC_12-x/")
+  render(<App />)
+  await waitFor(() => expect(screen.getByText("This invite no longer works")).toBeTruthy())
+  expect(fetchMock).toHaveBeenCalledWith("/api/invite/AbC_12-x", expect.anything())
+})

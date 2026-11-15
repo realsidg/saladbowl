@@ -24,7 +24,8 @@ export const sound = {
 
   unlock() {
     if (ctx) {
-      if (ctx.state === "suspended") void ctx.resume()
+      // iOS reports "interrupted" after the screen locks or a call; anything but running needs a resume
+      if (ctx.state !== "running") void ctx.resume().catch(() => {})
       return
     }
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -65,6 +66,9 @@ export const sound = {
       /* not supported */
     }
   },
+
+  /** test hook */
+  _ctx: () => ctx,
 
   /** Five seconds left. */
   tick() {

@@ -200,3 +200,15 @@ describe("teams and start", () => {
     expect(s2.inviteToken).not.toBe(s.inviteToken)
   })
 })
+
+describe("word source switch", () => {
+  it("clears the other source's words when the host switches", () => {
+    const ctx = makeCtx()
+    let { s } = lobbyWith(["A"], ctx, 2)
+    s = act(s, host, { type: "updateSettings", patch: { wordSource: "host" } }, ctx)
+    expect(s.cards).toHaveLength(0)
+    s = act(s, host, { type: "setHostWordList", words: ["x", "y"] }, ctx)
+    s = act(s, host, { type: "updateSettings", patch: { wordSource: "players" } }, ctx)
+    expect(s.cards).toHaveLength(0)
+  })
+})

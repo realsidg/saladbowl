@@ -72,10 +72,10 @@ describe("clue-giver", () => {
     act(() => void vi.advanceTimersByTime(100))
     fireEvent.click(got)
     expect(send).toHaveBeenCalledTimes(1)
-    expect(send).toHaveBeenCalledWith({ type: "gotIt", turnId: "t1" })
+    expect(send).toHaveBeenCalledWith({ type: "gotIt", turnId: "t1", cardId: "c1" })
     act(() => void vi.advanceTimersByTime(300))
     fireEvent.click(screen.getByRole("button", { name: "Skip" }))
-    expect(send).toHaveBeenLastCalledWith({ type: "skip", turnId: "t1" })
+    expect(send).toHaveBeenLastCalledWith({ type: "skip", turnId: "t1", cardId: "c1" })
   })
 })
 
@@ -167,5 +167,23 @@ describe("end", () => {
     expect(screen.getByText("Tangerine wins")).toBeTruthy()
     expect(screen.getByText("Most clues: Dev")).toBeTruthy()
     expect(screen.getAllByRole("row")).toHaveLength(4) // header + 2 rounds + total
+  })
+})
+
+describe("review fixes", () => {
+  it("sends the card id with Got it and Skip", () => {
+    const send = vi.fn(() => true)
+    render(<Play snap={game()} send={send} offset={0} />)
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }))
+    expect(send).toHaveBeenCalledWith({ type: "gotIt", turnId: "t1", cardId: "c1" })
+  })
+
+  it("does not ring a bell for a turn that ended long before the phone woke", () => {
+    const bell = vi.spyOn(sound, "bell").mockImplementation(() => {})
+    vi.setSystemTime(NOW + 40_000) // woke 40 s after endsAt-37s… i.e. 3 s past the end, stale snapshot still says playing
+    vi.setSystemTime(NOW + 45_000)
+    render(<Play snap={game({ me: { playerId: "p2", isHost: false }, turn: turn({ card: null }) })} send={vi.fn()} offset={0} />)
+    act(() => void vi.advanceTimersByTime(500))
+    expect(bell).not.toHaveBeenCalled()
   })
 })

@@ -62,8 +62,9 @@ export const intentSchema = z.discriminatedUnion("type", [
   bare("backToLobby"),
   bare("startGame"),
   turnIntent("startTurn"),
-  turnIntent("gotIt"),
-  turnIntent("skip"),
+  // cardId: the card on screen when tapped; a tap aimed at an old card (double tap on a slow network) is ignored
+  z.object({ type: z.literal("gotIt"), turnId: id, cardId: id.optional() }),
+  z.object({ type: z.literal("skip"), turnId: id, cardId: id.optional() }),
   turnIntent("undoLastGotIt"),
   z.object({ type: z.literal("reviewToggle"), turnId: id, cardId: id }),
   turnIntent("confirmReview"),
@@ -106,6 +107,7 @@ export type ErrorCode =
   | "skips_disabled"
   | "letter_mismatch"
   | "not_found"
+  | "stale_card"
 
 export type GamePhase = "lobby" | "teams" | "playing" | "ended"
 export type TurnPhase = "ready" | "playing" | "paused" | "review" | "done"

@@ -13,6 +13,8 @@ export interface SocketDeps {
 
 const BACKOFF = [500, 1000, 2000, 4000, 8000, 10_000]
 const FINAL_CODES = new Set([4401, 4403])
+const HIDDEN_RECONNECT_MS = 3000
+const PONG_TIMEOUT_MS = 4000
 
 /** One live connection to the game, kept alive across sleeps, app switches and flaky networks. */
 export class GameSocket {
@@ -26,11 +28,19 @@ export class GameSocket {
   private pingTimers: ReturnType<typeof setTimeout>[] = []
   private pingInterval: ReturnType<typeof setInterval> | null = null
   private closed = false
+  private hiddenAt: number | null = null
+  private lastMessageAt = 0
   private readonly wake = () => {
     if (this.closed || this.status === "gone") return
-    if (this.deps.visibility() !== "visible") return
-    if (this.ws && this.ws.readyState === this.deps.WebSocket.OPEN) this.ping()
-    else this.reconnectNow()
+    if (this.deps.visibility() !== "visible") {
+      this.hiddenAt ??= this.deps.now()
+      return
+    }
+    const wasAway = this.hiddenAt !== null && this.deps.now() - this.hiddenAt > HIDDEN_RECONNECT_MS
+    this.hiddenAt = null
+    // after a sleep the socket may look open but be dead (network changed): don't trust it
+    if (wasAway || !this.ws || this.ws.readyState !== this.deps.WebSocket.OPEN) this.forceReconnect()
+    else this.ping()
   }
 
   constructor(
@@ -74,6 +84,7 @@ export class GameSocket {
       this.pingInterval = setInterval(() => this.ping(), 10_000)
     }
     ws.onmessage = (e: MessageEvent) => {
+      this.lastMessageAt = this.deps.now()
       let m: ServerMessage
       try {
         m = JSON.parse(String(e.data))
@@ -96,6 +107,15 @@ export class GameSocket {
     }
   }
 
+  /** Drop the current socket (even if it claims to be open) and start a fresh one. */
+  private forceReconnect() {
+    const old = this.ws
+    this.ws = null
+    this.stopTimers()
+    old?.close()
+    this.reconnectNow()
+  }
+
   private reconnectNow() {
     if (this.retryTimer) clearTimeout(this.retryTimer)
     this.attempt = 0
@@ -104,7 +124,16 @@ export class GameSocket {
   }
 
   private ping() {
-    if (this.ws?.readyState === this.deps.WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "ping", t: this.deps.now() }))
+    const ws = this.ws
+    if (ws?.readyState !== this.deps.WebSocket.OPEN) return
+    const sentAt = this.deps.now()
+    ws.send(JSON.stringify({ type: "ping", t: sentAt }))
+    // no answer at all within a few seconds: the connection is dead even if no close event came
+    this.pingTimers.push(
+      setTimeout(() => {
+        if (this.ws === ws && this.lastMessageAt < sentAt) this.forceReconnect()
+      }, PONG_TIMEOUT_MS),
+    )
   }
 
   private stopTimers() {

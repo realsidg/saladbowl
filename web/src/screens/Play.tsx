@@ -23,7 +23,7 @@ export function Play({ snap, send, offset }: Props) {
   const turn = snap.turn
   const now = useNow(turn?.phase === "playing")
   const left = secondsLeft(turn, now, offset)
-  useTurnSounds(turn, left)
+  useTurnSounds(turn, left, now + offset)
   useWakeLock(true)
 
   const kind = snap.rounds[snap.roundIndex] ?? "taboo"
@@ -103,11 +103,11 @@ function ClueGiver({ turn, snap, send, header, left }: { turn: Turn; snap: Snaps
         {turn.gotCount} got, {snap.bowlCount} left in the bowl
       </p>
       <footer className="actions">
-        <button type="button" className="btn btn-paper btn-huge" disabled={paused} onClick={() => tap({ type: "gotIt", turnId: turn.id })}>
+        <button type="button" className="btn btn-paper btn-huge" disabled={paused} onClick={() => tap({ type: "gotIt", turnId: turn.id, cardId: turn.card?.id })}>
           Got it
         </button>
         {snap.settings.allowSkips && (
-          <button type="button" className="btn btn-outline" disabled={paused} onClick={() => tap({ type: "skip", turnId: turn.id })}>
+          <button type="button" className="btn btn-outline" disabled={paused} onClick={() => tap({ type: "skip", turnId: turn.id, cardId: turn.card?.id })}>
             Skip
           </button>
         )}

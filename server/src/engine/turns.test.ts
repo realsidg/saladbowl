@@ -239,3 +239,16 @@ describe("host controls", () => {
     expect(activeTurn(s)).toBeNull()
   })
 })
+
+describe("review fixes", () => {
+  it("ignores gotIt/skip aimed at a card that is no longer on screen (double tap)", () => {
+    let { s, ctx } = playing()
+    const first = turn(s).currentCardId!
+    s = act(s, clue(s), { type: "gotIt", turnId: turn(s).id, cardId: first }, ctx)
+    const r = applyIntent(s, clue(s), { type: "gotIt", turnId: turn(s).id, cardId: first }, ctx)
+    expect(r).toEqual({ ok: false, code: "stale_card" })
+    const r2 = applyIntent(s, clue(s), { type: "skip", turnId: turn(s).id, cardId: first }, ctx)
+    expect(r2).toEqual({ ok: false, code: "stale_card" })
+    expect(turn(s).shown).toHaveLength(1)
+  })
+})

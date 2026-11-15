@@ -44,6 +44,22 @@ export function Login({ me, onChange }: { me: Me; onChange: (m: Me) => void }) {
       <h1 className="brand" translate="no">
         Saladbowl
       </h1>
+      {me.isHost && !me.gameId && me.hostedGameId && (
+        <section className="stack">
+          <p>A game is still running.</p>
+          <button
+            type="button"
+            className="btn btn-paper"
+            onClick={async () => {
+              const r = await api("POST", `/api/games/${me.hostedGameId}/rejoin`, {})
+              if (r.ok) navigate("/game")
+              else setError("Couldn't get back into that game.")
+            }}
+          >
+            Back to the game
+          </button>
+        </section>
+      )}
       {me.gameId && (
         <section className="stack">
           <p>You're in a game.</p>

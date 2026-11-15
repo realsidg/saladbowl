@@ -15,6 +15,7 @@ export interface SessionStore {
   delete(id: string): void
   deleteForPlayer(gameId: string, playerId: string): void
   deleteExpired(now: number): number
+  deleteForGame(gameId: string): void
 }
 
 export function sessionStore(db: Db): SessionStore {
@@ -23,6 +24,7 @@ export function sessionStore(db: Db): SessionStore {
   const del = db.prepare("DELETE FROM sessions WHERE id = ?")
   const delPlayer = db.prepare("DELETE FROM sessions WHERE game_id = ? AND player_id = ?")
   const delExpired = db.prepare("DELETE FROM sessions WHERE expires_at <= ?")
+  const delGame = db.prepare("DELETE FROM sessions WHERE game_id = ?")
   return {
     create(row) {
       const id = randomBytes(32).toString("base64url")
@@ -38,5 +40,6 @@ export function sessionStore(db: Db): SessionStore {
     delete: (id) => void del.run(id),
     deleteForPlayer: (gameId, playerId) => void delPlayer.run(gameId, playerId),
     deleteExpired: (now) => Number(delExpired.run(now).changes),
+    deleteForGame: (gameId) => void delGame.run(gameId),
   }
 }

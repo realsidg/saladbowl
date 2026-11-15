@@ -25,4 +25,6 @@ export async function api<T = unknown>(method: "GET" | "POST", path: string, bod
 export interface Me {
   isHost: boolean
   gameId: string | null
+  /** for hosts: the latest game still running, to get back into after losing the player cookie */
+  hostedGameId?: string | null
 }

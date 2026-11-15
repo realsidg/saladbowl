@@ -4,6 +4,7 @@ import { loadConfig } from "./config.js"
 import { openDb } from "./db/db.js"
 import { gameStore } from "./db/games.js"
 import { sessionStore } from "./db/sessions.js"
+import { purgeOld } from "./games/cleanup.js"
 import { GameService } from "./games/service.js"
 import { buildApp } from "./http/app.js"
 import { Hub } from "./realtime/hub.js"
@@ -27,7 +28,7 @@ process.on("unhandledRejection", (err) => app.log.error({ err }, "unhandled reje
 process.on("uncaughtException", (err) => app.log.error({ err }, "uncaught exception"))
 
 const cleanup = () => {
-  const removed = store.deleteOld(Date.now())
+  const removed = purgeOld({ store, games, sessions, drop: (id) => hub.drop(id) }, Date.now())
   const expired = sessions.deleteExpired(Date.now())
   if (removed || expired) app.log.info({ removed, expired }, "cleanup")
 }

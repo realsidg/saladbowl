@@ -8,6 +8,12 @@ export class WindowLimiter {
     private windowMs: number,
   ) {}
 
+  /** Ms to wait if this key has already used its allowance, else 0. Doesn't count as a hit. */
+  blocked(key: string, now: number): number {
+    const e = this.hits.get(key)
+    return e && e.resetAt > now && e.count >= this.max ? e.resetAt - now : 0
+  }
+
   /** Records a hit; returns ms to wait if over the limit, else 0. */
   hit(key: string, now: number): number {
     let e = this.hits.get(key)

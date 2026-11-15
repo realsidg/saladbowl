@@ -20,8 +20,9 @@ export function App() {
     }
   }, [path])
 
-  const join = path.match(/^\/join\/([A-Za-z0-9_-]{1,64})$/)
-  if (join) return <Join token={join[1]!} />
+  // QR scanners and chat apps sometimes add a trailing slash or punctuation
+  const join = path.match(/^\/join\/(.*)$/)
+  if (join) return <Join token={join[1]!.replace(/[^A-Za-z0-9_-]+$/, "")} />
   if (!me || me.path !== path) return null
   if (path === "/game") {
     if (!me.value.gameId) {

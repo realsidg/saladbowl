@@ -23,7 +23,9 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
   const { games, sessions } = deps
   const now = games.now
   const login = new LoginLimiter()
-  const inviteLimit = new WindowLimiter(20, 15 * 60_000)
+  // Guests at a party share one public IP: only failed lookups count toward the tight limit.
+  const inviteFailLimit = new WindowLimiter(20, 15 * 60_000)
+  const inviteLimit = new WindowLimiter(300, 15 * 60_000)
   const createLimit = new WindowLimiter(10, 60 * 60_000)
 
   const setCookie = (reply: FastifyReply, name: string, sessionId: string, ttlMs: number) =>
@@ -74,7 +76,20 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
 
   app.get("/api/me", async (req) => {
     const g = liveGameOf(auth.player(req))
-    return { isHost: Boolean(auth.host(req)), gameId: g?.id ?? null }
+    const isHost = Boolean(auth.host(req))
+    return isHost ? { isHost, gameId: g?.id ?? null, hostedGameId: games.latestLive() } : { isHost, gameId: g?.id ?? null }
+  })
+
+  /** A host whose phone lost its player cookie gets back into a game they created. */
+  app.post("/api/games/:id/rejoin", async (req, reply) => {
+    if (!auth.host(req)) return reply.code(401).send({ code: "not_host" })
+    const id = z.object({ id: z.string().min(1).max(64) }).safeParse(req.params)
+    const g = id.success ? games.get(id.data.id) : null
+    const creator = g?.creatorId ? g.players.find((p) => p.id === g.creatorId && !p.kicked) : null
+    if (!g || g.phase === "ended" || !creator) return reply.code(404).send({ code: "not_found" })
+    sessions.deleteForPlayer(g.id, creator.id)
+    playerSession(reply, g.id, creator.id)
+    return reply.code(204).send()
   })
 
   app.post("/api/games", async (req, reply) => {
@@ -92,7 +107,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
 
   /** Shared guard for invite routes: rate limit, then a live game for the token. */
   const inviteGame = (ip: string, params: unknown, reply: FastifyReply) => {
-    const wait = inviteLimit.hit(ip, now())
+    const wait = inviteFailLimit.blocked(ip, now()) || inviteLimit.hit(ip, now())
     if (wait) {
       void tooMany(reply, wait)
       return null
@@ -100,6 +115,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
     const p = tokenParam.safeParse(params)
     const g = p.success ? games.byInvite(p.data.token) : null
     if (!g || g.phase === "ended") {
+      inviteFailLimit.hit(ip, now())
       void reply.code(404).send({ code: "invite_invalid" })
       return null
     }
@@ -114,7 +130,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
       phase: g.phase,
       alreadyIn: liveGameOf(mine)?.id === g.id,
       takeover: g.players
-        .filter((p) => !p.kicked && !deps.isConnected(g.id, p.id))
+        .filter((p) => !p.kicked && p.id !== g.creatorId && !deps.isConnected(g.id, p.id))
         .map((p) => ({ playerId: p.id, name: p.name })),
     }
   })
@@ -138,7 +154,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
 
     const pid = body.data.takeoverPlayerId
     const p = games.get(g.id)!.players.find((x) => x.id === pid)
-    if (!p || p.kicked || deps.isConnected(g.id, pid)) return reply.code(409).send({ code: "player_busy" })
+    if (!p || p.kicked || p.id === g.creatorId || deps.isConnected(g.id, pid)) return reply.code(409).send({ code: "player_busy" })
     sessions.deleteForPlayer(g.id, pid)
     playerSession(reply, g.id, pid)
     return reply.code(204).send()

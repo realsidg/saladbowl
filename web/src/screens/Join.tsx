@@ -21,6 +21,7 @@ export function Join({ token }: { token: string }) {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(token)) return setInvite("invalid")
     void api<Invite>("GET", `/api/invite/${token}`).then((r) => {
       if (!r.ok) return setInvite("invalid")
       if (r.data.alreadyIn) return navigate("/game", true)

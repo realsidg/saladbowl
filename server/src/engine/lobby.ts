@@ -123,6 +123,7 @@ export function applyLobbyIntent(s: GameState, actor: Actor, intent: Intent, ctx
       if (s.phase === "playing" && keys.some((k) => k !== "secondsPerTurn")) return fail("bad_phase")
       if (s.phase === "teams" && keys.some((k) => k === "wordsPerPlayer" || k === "wordSource" || k === "startingLetter"))
         return fail("bad_phase")
+      if (intent.patch.wordSource && intent.patch.wordSource !== s.settings.wordSource) s.cards = []
       s.settings = { ...s.settings, ...intent.patch }
       // A turn that hasn't started yet picks up a new length (unless it is a carryover).
       const t = s.turns[s.turns.length - 1]

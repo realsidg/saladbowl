@@ -33,7 +33,7 @@ describe("games", () => {
     const idle = { ...createGame(ctx, "b"), updatedAt: now - 3 * DAY }
     const fresh = { ...createGame(ctx, "c"), updatedAt: now - 3600_000 }
     for (const g of [ended, idle, fresh]) games.save(g)
-    expect(games.deleteOld(now)).toBe(2)
+    expect(games.deleteOld(now).sort()).toEqual([ended.id, idle.id].sort())
     expect(games.loadAll().map((g) => g.id)).toEqual([fresh.id])
   })
 })

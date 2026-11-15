@@ -161,6 +161,7 @@ export function applyTurnIntent(s: GameState, actor: Actor, intent: Intent, ctx:
       }
       const card = t.currentCardId
       if (!card) return fail("invalid")
+      if (intent.cardId && intent.cardId !== card) return fail("stale_card")
       if (intent.type === "skip") {
         if (!s.settings.allowSkips) return fail("skips_disabled")
         record(t, card, "skipped")

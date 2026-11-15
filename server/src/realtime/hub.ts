@@ -103,7 +103,8 @@ export class Hub {
     if (!msg) return this.send(conn.ws, { type: "error", code: "invalid", message: "That message wasn't understood." })
     if (msg.type === "ping") return this.send(conn.ws, { type: "pong", t: msg.t, serverNow: this.opts.now() })
     void this.dispatch(conn.gameId, { playerId: conn.playerId, isHost: conn.isHost }, msg.intent).then((r) => {
-      if (!r.ok) this.send(conn.ws, { type: "error", code: r.code, message: MESSAGES[r.code] ?? "That didn't work." })
+        // a tap that lost a race with the clock or with another tap: nothing to tell the player
+      if (!r.ok && r.code !== "stale_card") this.send(conn.ws, { type: "error", code: r.code, message: MESSAGES[r.code] ?? "That didn't work." })
     })
   }
 
@@ -189,6 +190,15 @@ export class Hub {
           c.ws.terminate()
         }
       }
+  }
+
+  /** A game was deleted: stop its timer and disconnect everyone in it. */
+  drop(gameId: string) {
+    const h = this.timers.get(gameId)
+    if (h !== undefined) this.opts.clearTimer(h)
+    this.timers.delete(gameId)
+    for (const c of this.conns.get(gameId) ?? []) c.ws.close(CLOSE.unauthorized, "game over")
+    this.conns.delete(gameId)
   }
 
   close() {

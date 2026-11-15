@@ -48,6 +48,8 @@ export interface GameState {
   teamCursor: Record<TeamId, number>
   nextTeam: TeamId
   carry: { playerId: string; remainingMs: number } | null
+  /** the host's own player in this game; never offered for takeover */
+  creatorId?: string | null
   createdAt: number
   updatedAt: number
   endedAt: number | null

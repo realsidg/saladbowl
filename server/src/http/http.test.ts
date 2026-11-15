@@ -238,3 +238,39 @@ describe("hardening", () => {
     expect(res.statusCode).toBe(413)
   })
 })
+
+describe("review fixes", () => {
+  it("does not rate-limit successful invite use from one shared network", async () => {
+    const { games } = make()
+    const { gameId } = await newGame("Sid")
+    const token = games.get(gameId)!.inviteToken
+    for (let i = 0; i < 30; i++) {
+      const r = await app.inject({ method: "GET", url: `/api/invite/${token}`, remoteAddress: "4.4.4.4" })
+      expect(r.statusCode).toBe(200)
+    }
+    for (let i = 0; i < 12; i++) expect((await post(`/api/invite/${token}/join`, { name: `P${i}` }, { ip: "4.4.4.4" })).statusCode).toBe(204)
+  })
+
+  it("never offers or allows taking over the game creator's player", async () => {
+    const { games } = make()
+    const { gameId } = await newGame("Sid")
+    const token = games.get(gameId)!.inviteToken
+    const sid = games.get(gameId)!.players[0]!
+    const info = await app.inject({ method: "GET", url: `/api/invite/${token}`, remoteAddress: "3.3.3.3" })
+    expect(info.json().takeover).toEqual([])
+    expect((await post(`/api/invite/${token}/join`, { takeoverPlayerId: sid.id }, { ip: "3.3.3.3" })).statusCode).toBe(409)
+  })
+
+  it("lets a host who lost their player cookie get back into the game they're running", async () => {
+    make()
+    const { gameId, host } = await newGame("Sid")
+    const me = await app.inject({ method: "GET", url: "/api/me", headers: { cookie: host } })
+    expect(me.json()).toEqual({ isHost: true, gameId: null, hostedGameId: gameId })
+    const back = await post(`/api/games/${gameId}/rejoin`, {}, { cookie: host })
+    expect(back.statusCode).toBe(204)
+    const player = cookieFrom(back, "sb_player")!.pair
+    const me2 = await app.inject({ method: "GET", url: "/api/me", headers: { cookie: player } })
+    expect(me2.json().gameId).toBe(gameId)
+    expect((await post(`/api/games/${gameId}/rejoin`, {})).statusCode).toBe(401)
+  })
+})

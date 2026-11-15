@@ -53,6 +53,11 @@ export class GameService {
     return this.store.loadAll().map((s) => this.get(s.id)!)
   }
 
+  /** Most recently active game that hasn't ended, for a host finding their way back. */
+  latestLive(): string | null {
+    return this.store.latestLive()
+  }
+
   forget(id: string) {
     this.cache.delete(id)
   }
@@ -83,6 +88,7 @@ export class GameService {
     const ctx = this.ctx()
     const r = addPlayer(createGame(ctx, this.newId()), hostName, ctx)
     if (!r.ok) return null
+    r.value.state.creatorId = r.value.playerId
     this.cache.set(r.value.state.id, r.value.state)
     this.store.save(r.value.state)
     return { gameId: r.value.state.id, playerId: r.value.playerId }

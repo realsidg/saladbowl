@@ -1,0 +1,36 @@
+:root {
+  --water: #14535c;
+  --deep-water: #0e3d44;
+  --foam: #d9f2ef;
+  --paper: #fffdf6;
+  --ink: #1d2a6b;
+  --tangerine: #ff8a1f;
+  --lagoon: #7fd6cc;
+  --on-team: #0f2a2e;
+  --rule: #cfe3f5;
+
+  --font-ui: "Rubik", system-ui, sans-serif;
+  --font-hand: "Kalam", "Comic Sans MS", cursive;
+
+  --t-14: 0.875rem;
+  --t-16: 1rem;
+  --t-20: 1.25rem;
+  --t-28: 1.75rem;
+  --t-40: 2.5rem;
+  --t-64: 4rem;
+  --t-112: 7rem;
+
+  --s-4: 4px;
+  --s-8: 8px;
+  --s-12: 12px;
+  --s-16: 16px;
+  --s-24: 24px;
+  --s-32: 32px;
+
+  --r-button: 16px;
+  --r-chip: 999px;
+  --r-sheet: 20px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --tap: 56px;
+}

@@ -1,0 +1,235 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--water);
+  color: var(--paper);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--t-16);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+.screen {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--s-12) + env(safe-area-inset-top)) var(--s-16) calc(var(--s-16) + env(safe-area-inset-bottom));
+  gap: var(--s-16);
+}
+
+.grow {
+  flex: 1;
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-8);
+  color: var(--foam);
+  font-size: var(--t-14);
+  font-weight: 700;
+  min-height: 32px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.15;
+}
+h1 {
+  font-size: var(--t-28);
+}
+h2 {
+  font-size: var(--t-20);
+}
+
+p {
+  margin: 0;
+}
+.muted {
+  color: var(--foam);
+}
+.center {
+  text-align: center;
+}
+
+/* Buttons */
+.btn {
+  appearance: none;
+  border: 0;
+  min-height: var(--tap);
+  padding: var(--s-12) var(--s-16);
+  border-radius: var(--r-button);
+  font-weight: 700;
+  font-size: var(--t-20);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 140ms var(--ease-out), opacity 140ms var(--ease-out);
+  width: 100%;
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.btn-paper {
+  background: var(--paper);
+  color: var(--ink);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--foam);
+}
+.btn-quiet {
+  background: var(--deep-water);
+  color: var(--foam);
+  font-size: var(--t-16);
+  min-height: 48px;
+}
+.btn-small {
+  width: auto;
+  min-height: 40px;
+  font-size: var(--t-14);
+  padding: var(--s-8) var(--s-12);
+}
+.btn-icon {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--foam);
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: var(--t-20);
+}
+
+:focus-visible {
+  outline: 3px solid var(--paper);
+  outline-offset: 2px;
+}
+
+/* Inputs */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+}
+.field label {
+  font-weight: 700;
+  font-size: var(--t-14);
+  color: var(--foam);
+}
+.input {
+  min-height: var(--tap);
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: var(--deep-water);
+  padding: 0 var(--s-16);
+  font-size: var(--t-20);
+  color: var(--paper);
+}
+.input::placeholder {
+  color: color-mix(in srgb, var(--foam) 55%, transparent);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--foam);
+}
+
+/* Team chips */
+.team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-chip);
+  padding: 4px 12px;
+  font-weight: 700;
+  font-size: var(--t-14);
+  color: var(--on-team);
+}
+.team-tangerine {
+  background: var(--tangerine);
+}
+.team-lagoon {
+  background: var(--lagoon);
+}
+.ink-tangerine {
+  color: var(--tangerine);
+}
+.ink-lagoon {
+  color: var(--lagoon);
+}
+
+/* Paper sheet (lists, settings) */
+.sheet {
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: var(--r-sheet);
+  padding: var(--s-16);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--s-24) + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  max-width: min(440px, calc(100% - 32px));
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 14px;
+  padding: var(--s-12) var(--s-16);
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(4, 30, 34, 0.45);
+  z-index: 50;
+}
+
+.banner {
+  background: var(--deep-water);
+  color: var(--foam);
+  border-radius: 12px;
+  padding: var(--s-8) var(--s-12);
+  font-size: var(--t-14);
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-property: opacity !important;
+    animation: none !important;
+  }
+}

@@ -3,12 +3,14 @@ import { join } from "node:path"
 import cookie from "@fastify/cookie"
 import helmet from "@fastify/helmet"
 import fastifyStatic from "@fastify/static"
+import websocket from "@fastify/websocket"
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify"
-import { HTTP_BODY_LIMIT } from "@saladbowl/shared"
+import { HTTP_BODY_LIMIT, WS_MESSAGE_LIMIT } from "@saladbowl/shared"
 import { sessionKey, verifySession } from "../auth/cookies.js"
 import type { Config } from "../config.js"
 import type { SessionRow, SessionStore } from "../db/sessions.js"
 import type { GameService } from "../games/service.js"
+import { CLOSE, type Hub } from "../realtime/hub.js"
 import { registerRoutes } from "./routes.js"
 import { originAllowed } from "./security.js"
 
@@ -16,6 +18,7 @@ export interface AppDeps {
   games: GameService
   sessions: SessionStore
   isConnected: (gameId: string, playerId: string) => boolean
+  hub?: Hub
 }
 
 export interface Auth {
@@ -91,6 +94,21 @@ export function buildApp(cfg: Config, deps: AppDeps): FastifyInstance {
   const auth = makeAuth(cfg, deps.sessions, deps.games.now)
   app.get("/healthz", async () => ({ ok: true }))
   registerRoutes(app, cfg, deps, auth)
+
+  const hub = deps.hub
+  if (hub) {
+    void app.register(websocket, { options: { maxPayload: WS_MESSAGE_LIMIT } })
+    void app.register(async (scope) => {
+      scope.get("/ws", { websocket: true }, (socket, req) => {
+        if (!originAllowed(req, cfg.origins)) return socket.close(CLOSE.forbidden, "bad origin")
+        const row = auth.player(req)
+        const game = row?.gameId ? deps.games.get(row.gameId) : null
+        const me = game?.players.find((p) => p.id === row!.playerId)
+        if (!row || !game || !me || me.kicked) return socket.close(CLOSE.unauthorized, "not signed in")
+        hub.attach(socket, { gameId: game.id, playerId: me.id, isHost: Boolean(auth.host(req)) })
+      })
+    })
+  }
 
   if (cfg.staticDir && existsSync(join(cfg.staticDir, "index.html"))) {
     void app.register(fastifyStatic, { root: cfg.staticDir, wildcard: false, index: ["index.html"] })

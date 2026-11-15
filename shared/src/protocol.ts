@@ -108,6 +108,7 @@ export type ErrorCode =
   | "letter_mismatch"
   | "not_found"
   | "stale_card"
+  | "duplicate_word"
 
 export type GamePhase = "lobby" | "teams" | "playing" | "ended"
 export type TurnPhase = "ready" | "playing" | "paused" | "review" | "done"

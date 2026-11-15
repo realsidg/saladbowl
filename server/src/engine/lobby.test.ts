@@ -212,3 +212,36 @@ describe("word source switch", () => {
     expect(s.cards).toHaveLength(0)
   })
 })
+
+describe("duplicate words", () => {
+  it("rejects a word already in the bowl, from anyone, ignoring case, spaces and punctuation", () => {
+    const ctx = makeCtx()
+    let { s, ids } = lobbyWith(["Anu", "Dev"], ctx, 0)
+    s = act(s, host, { type: "updateSettings", patch: { wordsPerPlayer: 3 } }, ctx)
+    s = act(s, as(ids[0]!), { type: "addWord", word: "Shah Rukh Khan" }, ctx)
+    expect(applyIntent(s, as(ids[0]!), { type: "addWord", word: "Shah Rukh Khan" }, ctx)).toEqual({ ok: false, code: "duplicate_word" })
+    expect(applyIntent(s, as(ids[1]!), { type: "addWord", word: "  shah rukh khan " }, ctx)).toEqual({ ok: false, code: "duplicate_word" })
+    expect(applyIntent(s, as(ids[1]!), { type: "addWord", word: "Shah-Rukh Khan!" }, ctx)).toEqual({ ok: false, code: "duplicate_word" })
+    s = act(s, as(ids[1]!), { type: "addWord", word: "Salman Khan" }, ctx)
+    expect(s.cards).toHaveLength(2)
+  })
+
+  it("rejects editing a word into one that's already there, but allows re-saving the same word", () => {
+    const ctx = makeCtx()
+    let { s, ids } = lobbyWith(["Anu", "Dev"], ctx, 0)
+    s = act(s, host, { type: "updateSettings", patch: { wordsPerPlayer: 2 } }, ctx)
+    s = act(s, as(ids[0]!), { type: "addWord", word: "Taj Mahal" }, ctx)
+    s = act(s, as(ids[1]!), { type: "addWord", word: "Biryani" }, ctx)
+    const devCard = s.cards.find((c) => c.playerId === ids[1])!
+    expect(applyIntent(s, as(ids[1]!), { type: "editWord", cardId: devCard.id, word: "taj mahal" }, ctx)).toEqual({ ok: false, code: "duplicate_word" })
+    expect(applyIntent(s, as(ids[1]!), { type: "editWord", cardId: devCard.id, word: "BIRYANI" }, ctx).ok).toBe(true)
+  })
+
+  it("drops duplicates from the host's word list", () => {
+    const ctx = makeCtx()
+    let s = createGame(ctx, "inv")
+    s = act(s, host, { type: "updateSettings", patch: { wordSource: "host" } }, ctx)
+    s = act(s, host, { type: "setHostWordList", words: ["Goa", "goa", "Kerala", "GOA!"] }, ctx)
+    expect(s.cards.map((c) => c.word)).toEqual(["Goa", "Kerala"])
+  })
+})

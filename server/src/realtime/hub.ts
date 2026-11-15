@@ -44,6 +44,7 @@ const MESSAGES: Partial<Record<ErrorCode, string>> = {
   limit: "You've added all your words.",
   skips_disabled: "Skips are off in this game.",
   letter_mismatch: "Words must start with the game's letter.",
+  duplicate_word: "That word's already in the bowl. Try another.",
 }
 
 /** Live connections per game: runs intents through the game queue, owns turn timers, sends each socket its own view. */

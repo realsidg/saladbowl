@@ -23,6 +23,14 @@ export function createGame(ctx: Ctx, inviteToken: string): GameState {
   }
 }
 
+/** Two words count as the same if they match ignoring case, spacing and punctuation. */
+export const wordKey = (w: string) => w.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "")
+
+const wordTaken = (s: GameState, word: string, exceptCardId?: string) => {
+  const k = wordKey(word)
+  return s.cards.some((c) => c.id !== exceptCardId && wordKey(c.word) === k)
+}
+
 function cleanName(name: string): string | null {
   const r = nameSchema.safeParse(name)
   return r.success ? r.data : null
@@ -90,6 +98,7 @@ export function applyLobbyIntent(s: GameState, actor: Actor, intent: Intent, ctx
       if (mine >= s.settings.wordsPerPlayer) return fail("limit")
       const letter = s.settings.startingLetter
       if (letter && intent.word[0]!.toUpperCase() !== letter) return fail("letter_mismatch")
+      if (wordTaken(s, intent.word)) return fail("duplicate_word")
       s.cards.push({ id: ctx.newId(), playerId: me.id, word: intent.word })
       return ok(s)
     }
@@ -104,6 +113,7 @@ export function applyLobbyIntent(s: GameState, actor: Actor, intent: Intent, ctx
       }
       const letter = s.settings.startingLetter
       if (letter && intent.word[0]!.toUpperCase() !== letter) return fail("letter_mismatch")
+      if (wordTaken(s, intent.word, card.id)) return fail("duplicate_word")
       card.word = intent.word
       return ok(s)
     }
@@ -112,7 +122,15 @@ export function applyLobbyIntent(s: GameState, actor: Actor, intent: Intent, ctx
       if (e) return e
       if (s.phase !== "lobby") return fail("bad_phase")
       if (s.settings.wordSource !== "host") return fail("invalid")
-      s.cards = intent.words.map((word) => ({ id: ctx.newId(), playerId: null, word }))
+      const seen = new Set<string>()
+      s.cards = intent.words
+        .filter((w) => {
+          const k = wordKey(w)
+          if (!k || seen.has(k)) return false
+          seen.add(k)
+          return true
+        })
+        .map((word) => ({ id: ctx.newId(), playerId: null, word }))
       return ok(s)
     }
     case "updateSettings": {

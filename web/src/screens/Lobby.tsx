@@ -1,5 +1,5 @@
 import { Icon } from "../components/Icon"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { Intent, Snapshot } from "@saladbowl/shared"
 import { Header } from "../components/Header"
 import { QrCode } from "../components/QrCode"
@@ -104,10 +104,16 @@ function MyWords({ snap, send }: { snap: Snapshot; send: Send }) {
   const max = snap.settings.wordsPerPlayer
   const letter = snap.settings.startingLetter
   const full = snap.myWords.length >= max
+  // Clear the box only once the word shows up in your list; a rejected word (duplicate, wrong letter) stays to fix.
+  const count = useRef(snap.myWords.length)
+  useEffect(() => {
+    if (snap.myWords.length > count.current) setWord("")
+    count.current = snap.myWords.length
+  }, [snap.myWords.length])
   const add = () => {
     const w = word.trim()
     if (!w || full) return
-    if (send({ type: "addWord", word: w })) setWord("")
+    send({ type: "addWord", word: w })
   }
   return (
     <section aria-label="Your words" className="words">

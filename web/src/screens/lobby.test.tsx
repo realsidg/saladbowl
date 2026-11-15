@@ -85,3 +85,16 @@ describe("Join", () => {
     await waitFor(() => expect(screen.getByText("This invite no longer works")).toBeTruthy())
   })
 })
+
+describe("adding a word that gets rejected", () => {
+  it("keeps the typed word until it actually lands in your list", async () => {
+    const send = vi.fn(() => true)
+    const s = snap({ myWords: [] })
+    const { rerender } = render(<Lobby snap={s} send={send} />)
+    const box = screen.getByLabelText("Add a word") as HTMLInputElement
+    await userEvent.type(box, "Goa{Enter}")
+    expect(box.value).toBe("Goa") // server may still say it's a duplicate
+    rerender(<Lobby snap={{ ...s, myWords: [{ id: "c1", word: "Goa" }] }} send={send} />)
+    expect(box.value).toBe("")
+  })
+})

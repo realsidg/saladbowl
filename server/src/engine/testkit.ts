@@ -39,7 +39,7 @@ export function act(s: GameState, actor: Actor, intent: Intent, ctx: Ctx): GameS
 /** A game in `teams` phase with the named players, each with `words` words. */
 export function lobbyWith(names: string[], ctx: Ctx, words = 2) {
   let s = createGame(ctx, "invite1")
-  s = act(s, host, { type: "updateSettings", patch: { wordsPerPlayer: words } }, ctx)
+  if (words > 0) s = act(s, host, { type: "updateSettings", patch: { wordsPerPlayer: words } }, ctx)
   const ids: string[] = []
   for (const name of names) {
     const r = must(addPlayer(s, name, ctx))

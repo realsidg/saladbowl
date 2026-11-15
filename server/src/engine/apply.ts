@@ -1,5 +1,6 @@
 import { intentSchema, type Intent, type IntentType } from "@saladbowl/shared"
 import { applyLobbyIntent } from "./lobby.js"
+import { applyTurnIntent } from "./turns.js"
 import { fail, type Actor, type Ctx, type GameState, type Result } from "./types.js"
 
 const HOST_ONLY = new Set<IntentType>([
@@ -18,6 +19,21 @@ const HOST_ONLY = new Set<IntentType>([
   "skipPlayer",
 ])
 
+const LOBBY = new Set<IntentType>([
+  "setName",
+  "addWord",
+  "editWord",
+  "removeWord",
+  "setHostWordList",
+  "updateSettings",
+  "makeTeams",
+  "shuffleTeams",
+  "movePlayer",
+  "backToLobby",
+  "startGame",
+  "resetInvite",
+])
+
 /** Applies one intent. Never mutates `s0`; returns the new state or an error code. */
 export function applyIntent(s0: GameState, actor: Actor, raw: Intent, ctx: Ctx): Result<GameState> {
   // Re-validate (and trim) even though the socket layer already parsed it.
@@ -26,7 +42,7 @@ export function applyIntent(s0: GameState, actor: Actor, raw: Intent, ctx: Ctx):
   const intent = parsed.data
   if (HOST_ONLY.has(intent.type) && !actor.isHost) return fail("not_host")
   const s = structuredClone(s0)
-  const r = applyLobbyIntent(s, actor, intent, ctx)
+  const r = LOBBY.has(intent.type) ? applyLobbyIntent(s, actor, intent, ctx) : applyTurnIntent(s, actor, intent, ctx)
   if (r.ok) r.value.updatedAt = ctx.now
   return r
 }

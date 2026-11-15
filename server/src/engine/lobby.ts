@@ -124,6 +124,9 @@ export function applyLobbyIntent(s: GameState, actor: Actor, intent: Intent, ctx
       if (s.phase === "teams" && keys.some((k) => k === "wordsPerPlayer" || k === "wordSource" || k === "startingLetter"))
         return fail("bad_phase")
       s.settings = { ...s.settings, ...intent.patch }
+      // A turn that hasn't started yet picks up a new length (unless it is a carryover).
+      const t = s.turns[s.turns.length - 1]
+      if (s.phase === "playing" && t?.phase === "ready" && !t.carried) t.durationMs = s.settings.secondsPerTurn * 1000
       return ok(s)
     }
     case "makeTeams": {

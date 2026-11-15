@@ -23,6 +23,8 @@ export interface Turn {
   roundIndex: number
   phase: TurnPhase
   durationMs: number
+  /** started from a carryover; its duration is not secondsPerTurn */
+  carried: boolean
   endsAt: number | null
   remainingMs: number | null
   currentCardId: string | null

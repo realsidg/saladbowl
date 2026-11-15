@@ -1,4 +1,4 @@
-import type { Intent } from "@saladbowl/shared"
+import type { Intent, TeamId } from "@saladbowl/shared"
 import { applyIntent } from "./apply.js"
 import { addPlayer, createGame } from "./lobby.js"
 import type { Actor, Ctx, GameState } from "./types.js"
@@ -49,3 +49,17 @@ export function lobbyWith(names: string[], ctx: Ctx, words = 2) {
   }
   return { s, ids }
 }
+
+/** Start a game with exact teams, in listed order. Returns state and name->id. */
+export function startWith(t: string[], l: string[], ctx: Ctx, words = 2) {
+  const all = [...t, ...l]
+  let { s, ids } = lobbyWith(all, ctx, words)
+  const id = Object.fromEntries(all.map((n, i) => [n, ids[i]!]))
+  s = act(s, host, { type: "makeTeams" }, ctx)
+  const move = (n: string, team: TeamId) => (s = act(s, host, { type: "movePlayer", playerId: id[n]!, team }, ctx))
+  t.forEach((n) => move(n, "tangerine"))
+  l.forEach((n) => move(n, "lagoon"))
+  s = act(s, host, { type: "startGame" }, ctx)
+  return { s, id }
+}
+

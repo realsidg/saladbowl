@@ -37,9 +37,15 @@ export function createReadyTurn(s: GameState, ctx: Ctx): Turn | null {
   return turn
 }
 
+const pick = (ids: string[], ctx: Ctx) => (ids.length ? ids[Math.floor(ctx.rng() * ids.length)]! : null)
+
+/** Moves to the next card (the one drawn in advance if it's still in the bowl), then draws a new next card.
+ *  `avoid` (a just-skipped card) is only shown again when nothing else is left. */
 function draw(s: GameState, t: Turn, ctx: Ctx, avoid: string | null) {
-  const pool = s.bowl.length > 1 && avoid ? s.bowl.filter((id) => id !== avoid) : s.bowl
-  t.currentCardId = pool.length ? pool[Math.floor(ctx.rng() * pool.length)]! : null
+  const inBowl = (id: string | null | undefined) => Boolean(id && s.bowl.includes(id))
+  const others = (ex: (string | null)[]) => s.bowl.filter((id) => !ex.includes(id))
+  t.currentCardId = inBowl(t.nextCardId) && t.nextCardId !== avoid ? t.nextCardId! : (pick(others([avoid]), ctx) ?? pick(s.bowl, ctx))
+  t.nextCardId = pick(others([t.currentCardId, avoid]), ctx) ?? pick(others([t.currentCardId]), ctx)
 }
 
 function record(t: Turn, cardId: string, outcome: Turn["shown"][number]["outcome"]) {
@@ -53,6 +59,7 @@ function toReview(t: Turn, remainingMs: number) {
   t.remainingMs = Math.max(0, remainingMs)
   t.endsAt = null
   t.currentCardId = null
+  t.nextCardId = null
 }
 
 /** Time is over for a playing or paused turn: the card on screen counts as missed. */
@@ -156,6 +163,8 @@ export function applyTurnIntent(s: GameState, actor: Actor, intent: Intent, ctx:
         if (!last) return fail("invalid")
         t.shown = t.shown.filter((x) => x !== last)
         s.bowl.push(last.cardId)
+        // the card that was on screen comes up next again
+        t.nextCardId = t.currentCardId
         t.currentCardId = last.cardId
         return ok(s)
       }

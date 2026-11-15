@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { player, snap } from "./fixtures"
@@ -96,5 +96,19 @@ describe("adding a word that gets rejected", () => {
     expect(box.value).toBe("Goa") // server may still say it's a duplicate
     rerender(<Lobby snap={{ ...s, myWords: [{ id: "c1", word: "Goa" }] }} send={send} />)
     expect(box.value).toBe("")
+  })
+})
+
+describe("settings taps", () => {
+  it("counts every quick tap on a stepper instead of repeating the same value", () => {
+    const send = vi.fn(() => true)
+    render(<Lobby snap={snap({ me: { playerId: "p1", isHost: true }, inviteUrl: "x" })} send={send} />)
+    const less = screen.getByRole("button", { name: "Less words each" })
+    fireEvent.click(less)
+    fireEvent.click(less)
+    fireEvent.click(less)
+    const sent = send.mock.calls.map((c) => (c as unknown as [{ patch: { wordsPerPlayer?: number } }])[0].patch.wordsPerPlayer).filter(Boolean)
+    expect(sent).toEqual([5, 4, 3])
+    expect(screen.getByRole("group", { name: "Words each" }).textContent).toContain("3")
   })
 })

@@ -48,6 +48,7 @@ export function snapshotFor(s: GameState, viewer: Actor, connected: Set<string>,
       durationMs: t.durationMs,
       gotCount: t.shown.filter((x) => x.outcome === "got").length,
       card: isClueGiver && t.phase === "playing" && t.currentCardId ? { id: t.currentCardId, word: word(t.currentCardId) } : null,
+      nextCard: isClueGiver && t.phase === "playing" && t.nextCardId ? { id: t.nextCardId, word: word(t.nextCardId) } : null,
       review:
         t.phase === "review" && (isClueGiver || viewer.isHost)
           ? t.shown.map((x) => ({ cardId: x.cardId, word: word(x.cardId), outcome: x.outcome }))

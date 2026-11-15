@@ -85,3 +85,16 @@ describe("scores", () => {
     expect(sc.byPlayer[t2.playerId]).toBe(2)
   })
 })
+
+describe("next card", () => {
+  it("is sent only to the clue-giver", () => {
+    const { s, id, t } = started()
+    const next = s.cards.find((c) => c.id === activeTurn(s)!.nextCardId)!.word
+    expect(snapshotFor(s, as(t.playerId), new Set(), ORIGIN).turn!.nextCard!.word).toBe(next)
+    for (const pid of Object.values(id).filter((p) => p !== t.playerId)) {
+      const snap = snapshotFor(s, as(pid, true), new Set(), ORIGIN)
+      expect(snap.turn!.nextCard).toBeNull()
+      expect(JSON.stringify(snap)).not.toContain(next)
+    }
+  })
+})

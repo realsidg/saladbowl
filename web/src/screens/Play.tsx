@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import type { Intent, Snapshot } from "@saladbowl/shared"
 import { Countdown } from "../components/Countdown"
 import { Header } from "../components/Header"
@@ -74,12 +74,28 @@ function ReadyMine({ turn, snap, send, header, kind }: { turn: Turn; snap: Snaps
 
 function ClueGiver({ turn, snap, send, header, left }: { turn: Turn; snap: Snapshot; send: Send; header: ReactNode; left: number }) {
   const lastTap = useRef(0)
+  // One tap ahead of the server: show the card drawn in advance right away, and let the next snapshot confirm it.
+  const [pending, setPending] = useState<{ from: string; card: { id: string; word: string } | null; got: number; left: number } | null>(null)
+  useEffect(() => {
+    if (pending && turn.card?.id !== pending.from) setPending(null)
+  }, [turn.card?.id, turn.id, turn.phase]) // eslint-disable-line react-hooks/exhaustive-deps
   const tap = (intent: Intent) => {
     const t = Date.now()
     if (t - lastTap.current < 300) return
     lastTap.current = t
     send(intent)
   }
+  const move = (kind: "gotIt" | "skip") => {
+    if (pending || !turn.card) return // wait for the server to catch up before acting on an unseen card
+    const t = Date.now()
+    if (t - lastTap.current < 300) return
+    lastTap.current = t
+    if (!send({ type: kind, turnId: turn.id, cardId: turn.card.id })) return
+    setPending({ from: turn.card.id, card: turn.nextCard, got: kind === "gotIt" ? 1 : 0, left: kind === "gotIt" ? -1 : 0 })
+  }
+  const card = pending ? pending.card : turn.card
+  const gotCount = turn.gotCount + (pending?.got ?? 0)
+  const bowlCount = snap.bowlCount + (pending?.left ?? 0)
   const paused = turn.phase === "paused"
   return (
     <main className="screen screen-play">
@@ -93,25 +109,25 @@ function ClueGiver({ turn, snap, send, header, left }: { turn: Turn; snap: Snaps
           <div className="slip slip-paused">
             <span>Paused</span>
           </div>
-        ) : turn.card ? (
-          <div className="slip" key={turn.card.id}>
-            <span>{turn.card.word}</span>
+        ) : card ? (
+          <div className="slip" key={card.id}>
+            <span>{card.word}</span>
           </div>
         ) : null}
       </div>
       <p className="muted center">
-        {turn.gotCount} got, {snap.bowlCount} left in the bowl
+        {gotCount} got, {bowlCount} left in the bowl
       </p>
       <footer className="actions">
-        <button type="button" className="btn btn-paper btn-huge" disabled={paused} onClick={() => tap({ type: "gotIt", turnId: turn.id, cardId: turn.card?.id })}>
+        <button type="button" className="btn btn-paper btn-huge" disabled={paused} onClick={() => move("gotIt")}>
           Got it
         </button>
         {snap.settings.allowSkips && (
-          <button type="button" className="btn btn-outline" disabled={paused} onClick={() => tap({ type: "skip", turnId: turn.id, cardId: turn.card?.id })}>
+          <button type="button" className="btn btn-outline" disabled={paused} onClick={() => move("skip")}>
             Skip
           </button>
         )}
-        {turn.gotCount > 0 && !paused && (
+        {gotCount > 0 && !paused && !pending && (
           <button type="button" className="btn btn-quiet btn-small undo" onClick={() => tap({ type: "undoLastGotIt", turnId: turn.id })}>
             Undo last “Got it”
           </button>
@@ -173,7 +189,17 @@ export function Scoreboard({ snap }: { snap: Snapshot }) {
 }
 
 function Review({ turn, snap, send, header, mine }: { turn: Turn; snap: Snapshot; send: Send; header: ReactNode; mine: boolean }) {
-  const items = turn.review ?? []
+  // Ticks flip instantly; the server's snapshot confirms them.
+  const [mine2, setMine2] = useState<Record<string, "got" | "missed">>({})
+  useEffect(() => {
+    setMine2((m) => {
+      const next = { ...m }
+      for (const i of turn.review ?? []) if (next[i.cardId] === i.outcome) delete next[i.cardId]
+      return next
+    })
+  }, [turn.review])
+  useEffect(() => setMine2({}), [turn.id])
+  const items = (turn.review ?? []).map((i) => (mine2[i.cardId] && i.outcome !== "skipped" ? { ...i, outcome: mine2[i.cardId]! } : i))
   const got = items.filter((i) => i.outcome === "got").length
   return (
     <main className="screen">
@@ -189,7 +215,10 @@ function Review({ turn, snap, send, header, mine }: { turn: Turn; snap: Snapshot
                 aria-label={i.word}
                 checked={i.outcome === "got"}
                 disabled={i.outcome === "skipped"}
-                onChange={() => send({ type: "reviewToggle", turnId: turn.id, cardId: i.cardId })}
+                onChange={() => {
+                  if (send({ type: "reviewToggle", turnId: turn.id, cardId: i.cardId }))
+                    setMine2((m) => ({ ...m, [i.cardId]: i.outcome === "got" ? "missed" : "got" }))
+                }}
               />
               <span className="review-word">{i.word}</span>
               <span className="review-tag">{i.outcome === "got" ? "Got it" : i.outcome === "skipped" ? "Skipped" : "Not guessed"}</span>

@@ -20,6 +20,7 @@ function turn(t: Partial<Turn> = {}): Turn {
     durationMs: 60_000,
     gotCount: 3,
     card: { id: "c1", word: "Shah Rukh Khan" },
+    nextCard: null,
     review: null,
     ...t,
   }
@@ -66,16 +67,18 @@ describe("clue-giver", () => {
 
   it("ignores a second tap within 300 ms and tags intents with the turn id", () => {
     const send = vi.fn(() => true)
-    render(<Play snap={game()} send={send} offset={0} />)
+    const { rerender } = render(<Play snap={game()} send={send} offset={0} />)
     const got = screen.getByRole("button", { name: "Got it" })
     fireEvent.click(got)
     act(() => void vi.advanceTimersByTime(100))
     fireEvent.click(got)
     expect(send).toHaveBeenCalledTimes(1)
     expect(send).toHaveBeenCalledWith({ type: "gotIt", turnId: "t1", cardId: "c1" })
+    // the server answers with the next card; the next tap acts on that one
+    rerender(<Play snap={game({ turn: turn({ card: { id: "c2", word: "Taj Mahal" }, gotCount: 4 }) })} send={send} offset={0} />)
     act(() => void vi.advanceTimersByTime(300))
     fireEvent.click(screen.getByRole("button", { name: "Skip" }))
-    expect(send).toHaveBeenLastCalledWith({ type: "skip", turnId: "t1", cardId: "c1" })
+    expect(send).toHaveBeenLastCalledWith({ type: "skip", turnId: "t1", cardId: "c2" })
   })
 })
 
@@ -185,5 +188,23 @@ describe("review fixes", () => {
     render(<Play snap={game({ me: { playerId: "p2", isHost: false }, turn: turn({ card: null }) })} send={vi.fn()} offset={0} />)
     act(() => void vi.advanceTimersByTime(500))
     expect(bell).not.toHaveBeenCalled()
+  })
+})
+
+describe("instant feedback", () => {
+  it("shows the next word the moment Got it is tapped, before the server answers", () => {
+    const send = vi.fn(() => true)
+    render(<Play snap={game({ turn: turn({ nextCard: { id: "c2", word: "Taj Mahal" } }) })} send={send} offset={0} />)
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }))
+    expect(screen.getByText("Taj Mahal")).toBeTruthy()
+    expect(screen.getByText(/^4 got/)).toBeTruthy()
+  })
+
+  it("flips a review tick the moment it's tapped", () => {
+    const review = [{ cardId: "c1", word: "Shah Rukh Khan", outcome: "got" as const }]
+    render(<Play snap={game({ turn: turn({ phase: "review", endsAt: null, card: null, review }) })} send={vi.fn(() => true)} offset={0} />)
+    const box = screen.getByRole("checkbox", { name: "Shah Rukh Khan" }) as HTMLInputElement
+    fireEvent.click(box)
+    expect(box.checked).toBe(false)
   })
 })

@@ -149,6 +149,8 @@ export interface Snapshot {
     durationMs: number
     gotCount: number
     card: { id: string; word: string } | null
+    /** clue-giver only: the card that comes after this one, so the phone can show it instantly */
+    nextCard: { id: string; word: string } | null
     review: { cardId: string; word: string; outcome: CardOutcome }[] | null
   }
   upNext: { playerId: string } | null

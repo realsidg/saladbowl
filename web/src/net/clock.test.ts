@@ -39,6 +39,7 @@ const turn = (t: Partial<Turn>): Turn => ({
   durationMs: 60_000,
   gotCount: 0,
   card: null,
+  nextCard: null,
   review: null,
   ...t,
 })

@@ -252,3 +252,35 @@ describe("review fixes", () => {
     expect(turn(s).shown).toHaveLength(1)
   })
 })
+
+describe("next card drawn in advance", () => {
+  it("keeps a next card that is in the bowl and isn't the current one", () => {
+    const { s } = playing()
+    const t = turn(s)
+    expect(t.nextCardId).not.toBeNull()
+    expect(t.nextCardId).not.toBe(t.currentCardId)
+    expect(s.bowl).toContain(t.nextCardId)
+  })
+
+  it("Got it shows exactly the card that was drawn in advance", () => {
+    let { s, ctx } = playing()
+    for (let i = 0; i < 4; i++) {
+      const next = turn(s).nextCardId
+      s = act(s, clue(s), { type: "gotIt", turnId: turn(s).id, cardId: turn(s).currentCardId! }, ctx)
+      expect(turn(s).currentCardId).toBe(next)
+    }
+  })
+
+  it("Skip also moves to the card drawn in advance", () => {
+    let { s, ctx } = playing()
+    const next = turn(s).nextCardId
+    s = act(s, clue(s), { type: "skip", turnId: turn(s).id, cardId: turn(s).currentCardId! }, ctx)
+    expect(turn(s).currentCardId).toBe(next)
+  })
+
+  it("has no next card when only one card is left", () => {
+    let { s, ctx } = playing()
+    while (s.bowl.length > 1) s = act(s, clue(s), { type: "gotIt", turnId: turn(s).id }, ctx)
+    expect(turn(s).nextCardId).toBeNull()
+  })
+})

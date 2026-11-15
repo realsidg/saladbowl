@@ -28,6 +28,8 @@ export interface Turn {
   endsAt: number | null
   remainingMs: number | null
   currentCardId: string | null
+  /** drawn in advance so the clue-giver's phone can show it the instant they tap */
+  nextCardId?: string | null
   shown: { cardId: string; outcome: CardOutcome }[]
   /** true when this turn emptied the bowl, so the round may end at confirm */
   emptiedBowl: boolean

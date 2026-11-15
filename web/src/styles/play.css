@@ -105,7 +105,6 @@
   display: grid;
   place-items: center;
   background: conic-gradient(var(--paper) calc(var(--frac) * 360deg), var(--deep-water) 0);
-  transition: background 200ms linear;
 }
 .countdown-ring::before {
   content: "";
@@ -181,6 +180,8 @@
 }
 .review-word {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--font-hand);
   font-weight: 700;
   font-size: var(--t-20);
@@ -212,6 +213,7 @@
   background: var(--paper);
   color: var(--ink);
   max-height: 88dvh;
+  overscroll-behavior: contain;
 }
 .host-sheet::backdrop {
   background: rgba(4, 30, 34, 0.55);
@@ -228,6 +230,8 @@
   color: var(--ink);
 }
 .host-sheet summary {
+  list-style: none;
+  justify-content: space-between;
   font-weight: 700;
   min-height: 44px;
   display: flex;
@@ -283,4 +287,20 @@
 .rounds-table .total {
   border-top: 2px solid var(--water);
   font-weight: 900;
+}
+.host-sheet summary::-webkit-details-marker {
+  display: none;
+}
+.host-sheet summary::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-right: 2.4px solid currentColor;
+  border-bottom: 2.4px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 160ms var(--ease-out);
+  margin-right: 6px;
+}
+.host-sheet details[open] > summary::after {
+  transform: rotate(45deg);
 }

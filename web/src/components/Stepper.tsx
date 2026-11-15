@@ -1,3 +1,4 @@
+import { Icon } from "./Icon"
 export function Stepper(props: {
   label: string
   value: number
@@ -14,11 +15,11 @@ export function Stepper(props: {
       <span className="stepper-label">{props.label}</span>
       <div className="stepper-row">
         <button type="button" className="btn-icon" aria-label={`Less ${props.label.toLowerCase()}`} disabled={props.value <= props.min} onClick={() => set(props.value - step)}>
-          −
+          <Icon name="minus" size={18} />
         </button>
         <output aria-live="polite">{props.format ? props.format(props.value) : props.value}</output>
         <button type="button" className="btn-icon" aria-label={`More ${props.label.toLowerCase()}`} disabled={props.value >= props.max} onClick={() => set(props.value + step)}>
-          +
+          <Icon name="plus" size={18} />
         </button>
       </div>
     </div>

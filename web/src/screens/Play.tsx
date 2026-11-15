@@ -113,7 +113,7 @@ function ClueGiver({ turn, snap, send, header, left }: { turn: Turn; snap: Snaps
         )}
         {turn.gotCount > 0 && !paused && (
           <button type="button" className="btn btn-quiet btn-small undo" onClick={() => tap({ type: "undoLastGotIt", turnId: turn.id })}>
-            Undo last "Got it"
+            Undo last “Got it”
           </button>
         )}
       </footer>

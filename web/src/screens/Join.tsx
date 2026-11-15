@@ -38,7 +38,12 @@ export function Join({ token }: { token: string }) {
     setError(ERRORS[r.data?.code ?? ""] ?? "That didn't work. Try again.")
   }
 
-  if (invite === null) return <main className="screen" aria-busy="true" />
+  if (invite === null)
+    return (
+      <main className="screen screen-center" aria-busy="true">
+        <p className="muted center">Opening the invite…</p>
+      </main>
+    )
   if (invite === "invalid")
     return (
       <main className="screen screen-center">
@@ -49,7 +54,9 @@ export function Join({ token }: { token: string }) {
 
   return (
     <main className="screen screen-center">
-      <h1 className="brand">Saladbowl</h1>
+      <h1 className="brand" translate="no">
+        Saladbowl
+      </h1>
       <p className="muted">{invite.phase === "lobby" ? "You've been invited to a game." : "This game has already started. Jump in."}</p>
       <form
         className="stack"
@@ -62,6 +69,7 @@ export function Join({ token }: { token: string }) {
           <label htmlFor="name">Your name</label>
           <input
             id="name"
+            name="nickname"
             className="input"
             value={name}
             maxLength={20}

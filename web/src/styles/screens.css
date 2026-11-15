@@ -262,11 +262,20 @@
 button.team-name:active {
   transform: scale(0.97);
 }
-.team-col-tangerine .team-name {
-  box-shadow: inset 4px 0 0 var(--tangerine);
+.team-name::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+  vertical-align: 1px;
 }
-.team-col-lagoon .team-name {
-  box-shadow: inset 4px 0 0 var(--lagoon);
+.team-col-tangerine .team-name::before {
+  background: var(--tangerine);
+}
+.team-col-lagoon .team-name::before {
+  background: var(--lagoon);
 }
 .team-me {
   outline: 2px solid var(--paper);

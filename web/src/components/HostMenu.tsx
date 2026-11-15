@@ -1,3 +1,4 @@
+import { Icon } from "./Icon"
 import { useEffect, useRef, useState } from "react"
 import { SECONDS_MAX, SECONDS_MIN, type Intent, type Snapshot } from "@saladbowl/shared"
 import { nameOf } from "../lib/words"
@@ -33,7 +34,7 @@ export function HostMenu({ snap, send }: { snap: Snapshot; send: (i: Intent) => 
             <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
               <h2>Host controls</h2>
               <button type="button" className="btn-icon" aria-label="Close" onClick={() => setOpen(false)}>
-                ×
+                <Icon name="close" />
               </button>
             </div>
             {t?.phase === "playing" && (

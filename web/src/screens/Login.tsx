@@ -41,7 +41,9 @@ export function Login({ me, onChange }: { me: Me; onChange: (m: Me) => void }) {
 
   return (
     <main className="screen screen-center">
-      <h1 className="brand">Saladbowl</h1>
+      <h1 className="brand" translate="no">
+        Saladbowl
+      </h1>
       {me.gameId && (
         <section className="stack">
           <p>You're in a game.</p>
@@ -63,6 +65,7 @@ export function Login({ me, onChange }: { me: Me; onChange: (m: Me) => void }) {
             <label htmlFor="host-name">Your name</label>
             <input
               id="host-name"
+              name="nickname"
               className="input"
               value={name}
               maxLength={20}
@@ -91,6 +94,7 @@ export function Login({ me, onChange }: { me: Me; onChange: (m: Me) => void }) {
             <label htmlFor="password">Host password</label>
             <input
               id="password"
+              name="password"
               className="input"
               type="password"
               autoComplete="current-password"

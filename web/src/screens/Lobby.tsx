@@ -1,3 +1,4 @@
+import { Icon } from "../components/Icon"
 import { useState } from "react"
 import type { Intent, Snapshot } from "@saladbowl/shared"
 import { Header } from "../components/Header"
@@ -126,6 +127,7 @@ function MyWords({ snap, send }: { snap: Snapshot; send: Send }) {
       >
         <input
           aria-label="Add a word"
+          name="word"
           className="input"
           value={word}
           maxLength={40}
@@ -145,7 +147,7 @@ function MyWords({ snap, send }: { snap: Snapshot; send: Send }) {
           <li key={w.id} className="slip-small">
             <span>{w.word}</span>
             <button type="button" className="btn-icon" aria-label={`Remove ${w.word}`} onClick={() => send({ type: "removeWord", cardId: w.id })}>
-              ×
+              <Icon name="close" size={18} />
             </button>
           </li>
         ))}
@@ -162,6 +164,7 @@ function HostWordList({ count, send }: { count: number; send: Send }) {
       <p className="muted">{count ? `${count} words in the bowl.` : "Paste words, one per line or separated by commas."}</p>
       <textarea
         aria-label="Words for the bowl"
+        name="words"
         className="input textarea"
         rows={6}
         value={text}

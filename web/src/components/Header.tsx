@@ -1,3 +1,4 @@
+import { Icon } from "./Icon"
 import { useState, type ReactNode } from "react"
 import { sound } from "../device/sound"
 
@@ -18,7 +19,7 @@ export function Header({ children, extra }: { children: ReactNode; extra?: React
             setMuted(!muted)
           }}
         >
-          {muted ? "🔇" : "🔈"}
+          <Icon name={muted ? "mute" : "sound"} />
         </button>
       </span>
     </header>

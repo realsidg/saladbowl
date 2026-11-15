@@ -7,21 +7,28 @@ import { Login } from "./screens/Login"
 
 export function App() {
   const path = usePath()
-  const [me, setMe] = useState<Me | null>(null)
+  // `me` is only trusted for the path it was fetched on, so a stale "not in a game" can't bounce /game back to /.
+  const [me, setMe] = useState<{ path: string; value: Me } | null>(null)
 
   useEffect(() => {
-    void api<Me>("GET", "/api/me").then((r) => setMe(r.ok ? r.data : { isHost: false, gameId: null }))
+    let live = true
+    void api<Me>("GET", "/api/me").then((r) => {
+      if (live) setMe({ path, value: r.ok ? r.data : { isHost: false, gameId: null } })
+    })
+    return () => {
+      live = false
+    }
   }, [path])
 
   const join = path.match(/^\/join\/([A-Za-z0-9_-]{1,64})$/)
   if (join) return <Join token={join[1]!} />
-  if (!me) return null
+  if (!me || me.path !== path) return null
   if (path === "/game") {
-    if (!me.gameId) {
+    if (!me.value.gameId) {
       navigate("/", true)
       return null
     }
     return <Game />
   }
-  return <Login me={me} onChange={setMe} />
+  return <Login me={me.value} onChange={(value) => setMe({ path, value })} />
 }

@@ -29,7 +29,7 @@ export function Game() {
         <End snap={s} />
       )}
       {g.error && (
-        <div className="toast" role="alert" onClick={g.clearError}>
+        <div className="toast" role="alert">
           {g.error}
         </div>
       )}

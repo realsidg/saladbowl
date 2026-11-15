@@ -1,3 +1,4 @@
+import { Icon } from "./Icon"
 import { useEffect, useState } from "react"
 import { ROUND_KINDS, ROUNDS_MAX, SECONDS_MAX, SECONDS_MIN, WORDS_PER_PLAYER_MAX, type Intent, type RoundKind, type Settings as S } from "@saladbowl/shared"
 import { ROUND_NAMES } from "../lib/words"
@@ -70,6 +71,8 @@ function LetterInput({ value, onChange }: { value: string | null; onChange: (l: 
       <label htmlFor="letter">Every word starts with</label>
       <input
         id="letter"
+        name="letter"
+        autoComplete="off"
         className="input input-paper"
         inputMode="text"
         autoCapitalize="characters"
@@ -101,7 +104,7 @@ function Rounds({ rounds, onChange }: { rounds: RoundKind[]; onChange: (r: Round
             <span>{ROUND_NAMES[k]}</span>
             <span>
               <button type="button" className="btn-icon" aria-label={`Move ${ROUND_NAMES[k]} up`} disabled={i === 0} onClick={() => move(i, -1)}>
-                ↑
+                <Icon name="up" size={18} />
               </button>
               <button
                 type="button"
@@ -110,7 +113,7 @@ function Rounds({ rounds, onChange }: { rounds: RoundKind[]; onChange: (r: Round
                 disabled={i === rounds.length - 1}
                 onClick={() => move(i, 1)}
               >
-                ↓
+                <Icon name="down" size={18} />
               </button>
               <button
                 type="button"
@@ -119,7 +122,7 @@ function Rounds({ rounds, onChange }: { rounds: RoundKind[]; onChange: (r: Round
                 disabled={rounds.length <= 1}
                 onClick={() => onChange(rounds.filter((_, j) => j !== i))}
               >
-                ×
+                <Icon name="close" size={18} />
               </button>
             </span>
           </li>

@@ -53,9 +53,14 @@ export class GameService {
     return this.store.loadAll().map((s) => this.get(s.id)!)
   }
 
-  /** Most recently active game that hasn't ended, for a host finding their way back. */
-  latestLive(): string | null {
-    return this.store.latestLive()
+  /** Most recently active unended game this host login started, for a host finding their way back. */
+  latestLive(hostSessionId: string): string | null {
+    return this.store.latestLive(hostSessionId)
+  }
+
+  /** Whether this host login started the game. */
+  isHostOf(gameId: string, hostSessionId: string): boolean {
+    return this.store.hostOf(gameId) === hostSessionId
   }
 
   forget(id: string) {
@@ -84,13 +89,14 @@ export class GameService {
     return next
   }
 
-  async create(hostName: string): Promise<{ gameId: string; playerId: string } | null> {
+  async create(hostName: string, hostSessionId: string): Promise<{ gameId: string; playerId: string } | null> {
     const ctx = this.ctx()
     const r = addPlayer(createGame(ctx, this.newId()), hostName, ctx)
     if (!r.ok) return null
     r.value.state.creatorId = r.value.playerId
     this.cache.set(r.value.state.id, r.value.state)
     this.store.save(r.value.state)
+    this.store.setHost(r.value.state.id, hostSessionId)
     return { gameId: r.value.state.id, playerId: r.value.playerId }
   }
 }

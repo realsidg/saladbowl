@@ -273,6 +273,20 @@ describe("review fixes", () => {
     expect(me2.json().gameId).toBe(gameId)
     expect((await post(`/api/games/${gameId}/rejoin`, {})).statusCode).toBe(401)
   })
+
+  it("only offers and allows rejoining games started by the same host login", async () => {
+    make()
+    const a = await newGame("Ana")
+    const b = await newGame("Bo")
+    const meA = await app.inject({ method: "GET", url: "/api/me", headers: { cookie: a.host } })
+    expect(meA.json().hostedGameId).toBe(a.gameId)
+    const meB = await app.inject({ method: "GET", url: "/api/me", headers: { cookie: b.host } })
+    expect(meB.json().hostedGameId).toBe(b.gameId)
+    expect((await post(`/api/games/${a.gameId}/rejoin`, {}, { cookie: b.host })).statusCode).toBe(404)
+    const other = await loginAsHost()
+    const meOther = await app.inject({ method: "GET", url: "/api/me", headers: { cookie: other } })
+    expect(meOther.json().hostedGameId).toBeNull()
+  })
 })
 
 describe("behind Cloudflare", () => {

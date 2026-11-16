@@ -55,6 +55,7 @@ export function snapshotFor(s: GameState, viewer: Actor, connected: Set<string>,
           : null,
     },
     upNext: upNext(s),
-    inviteUrl: viewer.isHost ? `${origin}/join/${s.inviteToken}` : null,
+    // Every player may bring others in; the host can still reset the invite to cut it off.
+    inviteUrl: viewer.playerId || viewer.isHost ? `${origin}/join/${s.inviteToken}` : null,
   }
 }

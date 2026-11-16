@@ -21,4 +21,9 @@ export const MIGRATIONS: { name: string; sql: string }[] = [
       CREATE INDEX sessions_player ON sessions (game_id, player_id);
     `,
   },
+  {
+    // The host login that started each game, so "back to the game" only finds that host's own games.
+    name: "002_host_session.sql",
+    sql: `ALTER TABLE games ADD COLUMN host_session TEXT;`,
+  },
 ]

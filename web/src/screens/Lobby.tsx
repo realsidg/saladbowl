@@ -25,7 +25,7 @@ export function Lobby({ snap, send }: { snap: Snapshot; send: Send }) {
   return (
     <main className="screen">
       <Header>Lobby</Header>
-      {host && snap.inviteUrl && <Invite url={snap.inviteUrl} />}
+      {snap.inviteUrl && (host ? <Invite url={snap.inviteUrl} /> : <PlayerInvite url={snap.inviteUrl} />)}
 
       <section aria-label="Players">
         <h2 className="section-title">
@@ -83,7 +83,7 @@ function Invite({ url }: { url: string }) {
         className="btn btn-small btn-ink"
         onClick={async () => {
           try {
-            if (navigator.share) await navigator.share({ title: "Join my Saladbowl game", url })
+            if (navigator.share) await navigator.share({ title: "Join our Saladbowl game", url })
             else {
               await navigator.clipboard.writeText(url)
               setCopied(true)
@@ -96,6 +96,18 @@ function Invite({ url }: { url: string }) {
         {copied ? "Link copied" : "Share link"}
       </button>
     </section>
+  )
+}
+
+/** Players get the same invite, folded away so it doesn't push their words down. */
+function PlayerInvite({ url }: { url: string }) {
+  const [open, setOpen] = useState(false)
+  return open ? (
+    <Invite url={url} />
+  ) : (
+    <button type="button" className="btn btn-small btn-ink" onClick={() => setOpen(true)}>
+      Invite others
+    </button>
   )
 }
 

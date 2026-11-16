@@ -47,11 +47,11 @@ describe("snapshotFor", () => {
     expect(snap.players.find((p) => p.id === ids[1])!.wordCount).toBe(2)
   })
 
-  it("gives the invite URL to hosts only", () => {
+  it("gives the invite URL to every player so anyone can bring others in", () => {
     const ctx = makeCtx()
     const { s, ids } = lobbyWith(["Anu"], ctx)
     expect(snapshotFor(s, as(ids[0]!, true), new Set(), ORIGIN).inviteUrl).toBe(`${ORIGIN}/join/${s.inviteToken}`)
-    expect(snapshotFor(s, as(ids[0]!), new Set(), ORIGIN).inviteUrl).toBeNull()
+    expect(snapshotFor(s, as(ids[0]!), new Set(), ORIGIN).inviteUrl).toBe(`${ORIGIN}/join/${s.inviteToken}`)
   })
 
   it("marks connected players and names who is up next", () => {

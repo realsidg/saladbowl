@@ -38,7 +38,15 @@ describe("Lobby", () => {
     expect(screen.getByText("Waiting for at least 2 players")).toBeTruthy()
   })
 
-  it("shows players no settings controls and no QR", () => {
+  it("lets players open the invite QR to bring others in", async () => {
+    const { container } = render(<Lobby snap={snap({ inviteUrl: "https://bowl.example/join/tok" })} send={vi.fn()} />)
+    expect(container.querySelector("svg[data-qr]")).toBeNull()
+    await userEvent.click(screen.getByRole("button", { name: "Invite others" }))
+    expect(container.querySelector("svg[data-qr]")!.getAttribute("aria-label")).toBe("QR code for https://bowl.example/join/tok")
+    expect(screen.getByRole("button", { name: "Share link" })).toBeTruthy()
+  })
+
+  it("shows players no settings controls", () => {
     const { container } = render(<Lobby snap={snap()} send={vi.fn()} />)
     expect(container.querySelector("svg[data-qr]")).toBeNull()
     expect(screen.queryByRole("group", { name: "Seconds per turn" })).toBeNull()

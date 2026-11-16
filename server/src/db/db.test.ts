@@ -70,7 +70,7 @@ describe("migrations", () => {
     openDb(file).close()
     const db = openDb(file)
     const rows = db.prepare("SELECT name FROM migrations").all()
-    expect(rows).toEqual([{ name: "001_init.sql" }])
+    expect(rows).toEqual([{ name: "001_init.sql" }, { name: "002_host_session.sql" }])
     db.close()
   })
 })

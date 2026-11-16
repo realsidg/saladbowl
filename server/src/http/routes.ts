@@ -84,17 +84,20 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
 
   app.get("/api/me", async (req) => {
     const g = liveGameOf(auth.player(req))
-    const isHost = Boolean(auth.host(req))
-    return isHost ? { isHost, gameId: g?.id ?? null, hostedGameId: games.latestLive() } : { isHost, gameId: g?.id ?? null }
+    const host = auth.host(req)
+    return host
+      ? { isHost: true, gameId: g?.id ?? null, hostedGameId: games.latestLive(host.id) }
+      : { isHost: false, gameId: g?.id ?? null }
   })
 
-  /** A host whose phone lost its player cookie gets back into a game they created. */
+  /** A host whose phone lost its player cookie gets back into a game they created, from the same host login. */
   app.post("/api/games/:id/rejoin", async (req, reply) => {
-    if (!auth.host(req)) return reply.code(401).send({ code: "not_host" })
+    const host = auth.host(req)
+    if (!host) return reply.code(401).send({ code: "not_host" })
     const id = z.object({ id: z.string().min(1).max(64) }).safeParse(req.params)
     const g = id.success ? games.get(id.data.id) : null
     const creator = g?.creatorId ? g.players.find((p) => p.id === g.creatorId && !p.kicked) : null
-    if (!g || g.phase === "ended" || !creator) return reply.code(404).send({ code: "not_found" })
+    if (!g || g.phase === "ended" || !creator || !games.isHostOf(g.id, host.id)) return reply.code(404).send({ code: "not_found" })
     sessions.deleteForPlayer(g.id, creator.id)
     playerSession(reply, g.id, creator.id)
     return reply.code(204).send()
@@ -107,7 +110,7 @@ export function registerRoutes(app: FastifyInstance, cfg: Config, deps: AppDeps,
     if (wait) return tooMany(reply, wait)
     const body = gameBody.safeParse(req.body)
     if (!body.success) return reply.code(400).send({ code: "invalid" })
-    const made = await games.create(body.data.name)
+    const made = await games.create(body.data.name, host.id)
     if (!made) return reply.code(400).send({ code: "invalid" })
     playerSession(reply, made.gameId, made.playerId)
     return reply.send({ gameId: made.gameId })

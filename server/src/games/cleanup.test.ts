@@ -14,7 +14,7 @@ describe("purgeOld", () => {
     const store = gameStore(db)
     const sessions = sessionStore(db)
     const games = new GameService(store, { now: () => now })
-    const made = (await games.create("Sid"))!
+    const made = (await games.create("Sid", "host-session"))!
     const sid = sessions.create({ role: "player", gameId: made.gameId, playerId: made.playerId, expiresAt: now + 30 * DAY })
     games.get(made.gameId) // cached
     const dropped: string[] = []

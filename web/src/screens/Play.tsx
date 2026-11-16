@@ -6,7 +6,7 @@ import { HostMenu } from "../components/HostMenu"
 import { useNow } from "../components/useNow"
 import { useTurnSounds } from "../components/useTurnSounds"
 import { useWakeLock } from "../device/wakeLock"
-import { ROUND_HINTS, ROUND_NAMES, TEAM_NAMES, nameOf } from "../lib/words"
+import { ROUND_HINTS, ROUND_NAMES, nameOf, teamName } from "../lib/words"
 import { secondsLeft } from "../net/clock"
 
 type Send = (i: Intent) => boolean
@@ -55,7 +55,7 @@ function ReadyMine({ turn, snap, send, header, kind }: { turn: Turn; snap: Snaps
     <main className="screen">
       {header}
       <div className="grow-center stack center">
-        <span className={`team team-${turn.team}`}>{TEAM_NAMES[turn.team]}</span>
+        <span className={`team team-${turn.team}`}>{teamName(snap, turn.team)}</span>
         <h1 className="big-title">Your turn</h1>
         <p className="round-hint">{ROUND_HINTS[kind]}</p>
         <p className="muted">
@@ -139,7 +139,7 @@ function ClueGiver({ turn, snap, send, header, left }: { turn: Turn; snap: Snaps
 
 function Watcher({ turn, snap, header, left, kind }: { turn: Turn; snap: Snapshot; header: ReactNode; left: number; kind: keyof typeof VERB }) {
   const giver = nameOf(snap, turn.playerId)
-  const team = TEAM_NAMES[turn.team]
+  const team = teamName(snap, turn.team)
   const next = snap.upNext ? nameOf(snap, snap.upNext.playerId) : null
   const line =
     turn.phase === "ready"
@@ -177,11 +177,11 @@ export function Scoreboard({ snap }: { snap: Snapshot }) {
   return (
     <div className="scoreboard" aria-label="Score">
       <div className="score score-tangerine">
-        <span className="score-name">Tangerine</span>
+        <span className="score-name">{teamName(snap, "tangerine")}</span>
         <span className="score-num">{snap.scores.byTeam.tangerine}</span>
       </div>
       <div className="score score-lagoon">
-        <span className="score-name">Lagoon</span>
+        <span className="score-name">{teamName(snap, "lagoon")}</span>
         <span className="score-num">{snap.scores.byTeam.lagoon}</span>
       </div>
     </div>
@@ -230,7 +230,7 @@ function Review({ turn, snap, send, header, mine }: { turn: Turn; snap: Snapshot
       <div className="grow" />
       <footer className="actions">
         <p className="center review-total">
-          +{got} for {TEAM_NAMES[turn.team]}
+          +{got} for {teamName(snap, turn.team)}
         </p>
         <button type="button" className="btn btn-paper" onClick={() => send({ type: "confirmReview", turnId: turn.id })}>
           Done

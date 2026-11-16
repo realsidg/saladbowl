@@ -212,6 +212,24 @@ describe("connecting", () => {
     }
   })
 
+  it("gives host controls only to the game's creator, not to guests or other hosts who join", async () => {
+    const env = await start()
+    const { cookies } = await setupGame(env, ["Anu"])
+    const otherHost = cookieOf(await post(env, "/api/login", { password: "let-me-in-please" }), "sb_host")
+    const token = [...env.games.loadAll()][0]!.inviteToken
+    const joined = await post(env, `/api/invite/${token}/join`, { name: "Bo" }, otherHost)
+    const bo = await connect(env, `${otherHost}; ${cookieOf(joined, "sb_player")}`)
+    const anu = await connect(env, cookies["Anu"]!)
+    const sid = await connect(env, cookies["Sid"]!)
+    await settle()
+    expect(sid.snap().me.isHost).toBe(true)
+    expect(anu.snap().me.isHost).toBe(false)
+    expect(bo.snap().me.isHost).toBe(false)
+    bo.intent({ type: "makeTeams" })
+    await settle()
+    expect(sid.snap().phase).toBe("lobby")
+  })
+
   it("answers ping with pong", async () => {
     const env = await start()
     const { cookies } = await setupGame(env, [])

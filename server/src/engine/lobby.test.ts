@@ -53,6 +53,30 @@ describe("players", () => {
   })
 })
 
+describe("team names", () => {
+  it("lets the host rename teams in the lobby, on the teams screen and mid-game", () => {
+    const ctx = makeCtx()
+    let { s, ids } = lobbyWith(["Anu", "Dev"], ctx)
+    expect(s.settings.teamNames).toEqual({ tangerine: "Tangerine", lagoon: "Lagoon" })
+    s = act(s, host, { type: "updateSettings", patch: { teamNames: { tangerine: "Aces", lagoon: "Kings" } } }, ctx)
+    expect(s.settings.teamNames).toEqual({ tangerine: "Aces", lagoon: "Kings" })
+    s = act(s, host, { type: "makeTeams" }, ctx)
+    s = act(s, host, { type: "updateSettings", patch: { teamNames: { tangerine: "Aces", lagoon: "Queens" } } }, ctx)
+    s = act(s, host, { type: "startGame" }, ctx)
+    s = act(s, host, { type: "updateSettings", patch: { teamNames: { tangerine: "Jacks", lagoon: "Queens" } } }, ctx)
+    expect(s.settings.teamNames.tangerine).toBe("Jacks")
+    const rename: Intent = { type: "updateSettings", patch: { teamNames: { tangerine: "Mine", lagoon: "Yours" } } }
+    expect(applyIntent(s, as(ids[0]!), rename, ctx)).toEqual({ ok: false, code: "not_host" })
+  })
+
+  it("refuses two teams with the same name", () => {
+    const ctx = makeCtx()
+    const { s } = lobbyWith(["Anu"], ctx)
+    const same: Intent = { type: "updateSettings", patch: { teamNames: { tangerine: "Aces", lagoon: "aces" } } }
+    expect(applyIntent(s, host, same, ctx)).toEqual({ ok: false, code: "name_taken" })
+  })
+})
+
 describe("words", () => {
   it("enforces words per player", () => {
     const ctx = makeCtx()

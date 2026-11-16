@@ -34,6 +34,7 @@ export const settingsSchema = z.object({
     .transform((s) => s.toUpperCase())
     .nullable(),
   wordSource: z.enum(["players", "host"]),
+  teamNames: z.object({ tangerine: nameSchema, lagoon: nameSchema }),
 })
 export type Settings = z.output<typeof settingsSchema>
 
@@ -44,6 +45,7 @@ export const DEFAULT_SETTINGS: Settings = {
   allowSkips: true,
   startingLetter: null,
   wordSource: "players",
+  teamNames: { tangerine: "Tangerine", lagoon: "Lagoon" },
 }
 
 const turnIntent = <T extends string>(type: T) => z.object({ type: z.literal(type), turnId: id })

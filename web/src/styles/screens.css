@@ -287,3 +287,20 @@ button.team-name:active {
   transform: translateX(-50%);
   z-index: 40;
 }
+
+/* the host types over a team's name on the teams screen */
+.team-input {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--t-14);
+  width: 100%;
+  min-height: 36px;
+  text-overflow: ellipsis;
+  cursor: text;
+}
+.team-input:focus {
+  outline: 2px solid var(--paper);
+  outline-offset: 2px;
+}

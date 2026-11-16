@@ -1,4 +1,4 @@
-import type { Snapshot } from "@saladbowl/shared"
+import type { Snapshot, TeamId } from "@saladbowl/shared"
 
 export const ROUND_NAMES = { taboo: "Taboo", charades: "Charades", password: "Password" } as const
 export const ROUND_HINTS = {
@@ -7,6 +7,8 @@ export const ROUND_HINTS = {
   password: "One word only.",
 } as const
 export const TEAM_NAMES = { tangerine: "Tangerine", lagoon: "Lagoon" } as const
+/** The team's name as the host set it. */
+export const teamName = (s: Snapshot, t: TeamId): string => s.settings.teamNames?.[t] ?? TEAM_NAMES[t]
 
 export const nameOf = (s: Snapshot, id: string | null | undefined) => s.players.find((p) => p.id === id)?.name ?? "Someone"
 

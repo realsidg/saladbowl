@@ -1,4 +1,4 @@
-import type { Snapshot } from "@saladbowl/shared"
+import { DEFAULT_SETTINGS, type Snapshot } from "@saladbowl/shared"
 import { nextPlayer, otherTeam } from "./order.js"
 import { scores } from "./score.js"
 import { activeTurn } from "./turns.js"
@@ -22,7 +22,8 @@ export function snapshotFor(s: GameState, viewer: Actor, connected: Set<string>,
   return {
     me: { playerId: viewer.playerId, isHost: viewer.isHost },
     phase: s.phase,
-    settings: s.settings,
+    // games saved before team names existed have none
+    settings: { ...s.settings, teamNames: s.settings.teamNames ?? DEFAULT_SETTINGS.teamNames },
     players: s.players.map((p) => ({
       id: p.id,
       name: p.name,

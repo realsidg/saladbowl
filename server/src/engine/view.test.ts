@@ -47,6 +47,13 @@ describe("snapshotFor", () => {
     expect(snap.players.find((p) => p.id === ids[1])!.wordCount).toBe(2)
   })
 
+  it("fills in default team names for games saved before teams could be renamed", () => {
+    const ctx = makeCtx()
+    const { s, ids } = lobbyWith(["Anu"], ctx)
+    const old = { ...s, settings: { ...s.settings, teamNames: undefined as never } }
+    expect(snapshotFor(old, as(ids[0]!), new Set(), ORIGIN).settings.teamNames).toEqual({ tangerine: "Tangerine", lagoon: "Lagoon" })
+  })
+
   it("gives the invite URL to every player so anyone can bring others in", () => {
     const ctx = makeCtx()
     const { s, ids } = lobbyWith(["Anu"], ctx)

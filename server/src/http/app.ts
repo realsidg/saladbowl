@@ -105,7 +105,9 @@ export function buildApp(cfg: Config, deps: AppDeps): FastifyInstance {
         const game = row?.gameId ? deps.games.get(row.gameId) : null
         const me = game?.players.find((p) => p.id === row!.playerId)
         if (!row || !game || !me || me.kicked) return socket.close(CLOSE.unauthorized, "not signed in")
-        hub.attach(socket, { gameId: game.id, playerId: me.id, isHost: Boolean(auth.host(req)) })
+        // Host powers belong to the player who created this game, not to any phone that knows the password.
+        const isHost = game.creatorId ? me.id === game.creatorId : Boolean(auth.host(req))
+        hub.attach(socket, { gameId: game.id, playerId: me.id, isHost })
       })
     })
   }

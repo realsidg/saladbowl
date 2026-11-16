@@ -8,7 +8,7 @@ export function createGame(ctx: Ctx, inviteToken: string): GameState {
     id: ctx.newId(),
     inviteToken,
     phase: "lobby",
-    settings: { ...DEFAULT_SETTINGS, rounds: [...DEFAULT_SETTINGS.rounds] },
+    settings: { ...DEFAULT_SETTINGS, rounds: [...DEFAULT_SETTINGS.rounds], teamNames: { ...DEFAULT_SETTINGS.teamNames } },
     players: [],
     cards: [],
     roundIndex: 0,
@@ -138,7 +138,9 @@ export function applyLobbyIntent(s: GameState, actor: Actor, intent: Intent, ctx
       if (e) return e
       if (s.phase === "ended") return fail("bad_phase")
       const keys = Object.keys(intent.patch)
-      if (s.phase === "playing" && keys.some((k) => k !== "secondsPerTurn")) return fail("bad_phase")
+      if (s.phase === "playing" && keys.some((k) => k !== "secondsPerTurn" && k !== "teamNames")) return fail("bad_phase")
+      const names = intent.patch.teamNames
+      if (names && names.tangerine.toLowerCase() === names.lagoon.toLowerCase()) return fail("name_taken")
       if (s.phase === "teams" && keys.some((k) => k === "wordsPerPlayer" || k === "wordSource" || k === "startingLetter"))
         return fail("bad_phase")
       if (intent.patch.wordSource && intent.patch.wordSource !== s.settings.wordSource) s.cards = []
